@@ -140,9 +140,17 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 16px 24px 12px;
+  padding: 16px 24px env(safe-area-inset-bottom, 20px);
   background: rgba(0,0,0,0.6);
   flex-shrink: 0;
+}
+
+/* Shutter + mode switcher column */
+#shutter-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
 /* ========== BUTTONS ========== */
@@ -241,9 +249,6 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 10px 0 env(safe-area-inset-bottom, 16px);
-  background: rgba(0,0,0,0.6);
-  flex-shrink: 0;
 }
 
 .mode-track {
