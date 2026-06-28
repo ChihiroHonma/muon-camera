@@ -109,6 +109,9 @@ async function initCamera() {
     // Mirror front camera
     video.style.transform = currentFacing === 'user' ? 'scaleX(-1)' : '';
 
+    // Apply ratio box after stream layout settles
+    requestAnimationFrame(applyRatioBox);
+
   } catch (err) {
     console.error(err);
     showToast('カメラへのアクセスが許可されていません');
@@ -480,7 +483,19 @@ thumbnailBtn.addEventListener('click', () => {
   if (capturedUrl) showPreview();
 });
 
-// ── 共通：ファイル生成 ─────────────────────────────────
+// ── 共通：ファイル生成・ダウンロード ───────────────────
+
+function fallbackDownload(file) {
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = file.name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('ダウンロードしました');
+}
 
 function buildFile() {
   const ext = capturedType === 'photo' ? 'jpg' : (capturedMime?.includes('webm') ? 'webm' : 'mp4');
