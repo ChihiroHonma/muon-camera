@@ -334,7 +334,6 @@ async function applyZoom(val) {
 }
 
 // Pinch zoom
-const viewfinder = document.getElementById('viewfinder');
 let pinchStart = 0;
 let zoomAtPinchStart = 1;
 
