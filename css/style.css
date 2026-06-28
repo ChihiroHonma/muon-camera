@@ -186,8 +186,8 @@ html, body {
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.35);
-  border: 3px solid #fff;
+  background: #fff;
+  border: 3px solid rgba(0,0,0,0.55);
   cursor: pointer;
   transition: transform 0.1s, opacity 0.1s;
   flex-shrink: 0;
