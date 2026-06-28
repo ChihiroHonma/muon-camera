@@ -425,19 +425,30 @@ function buildFile() {
 saveBtn.addEventListener('click', async () => {
   if (!capturedBlob) return;
   const file = buildFile();
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  // navigator.share({ files }) が使えれば開く（iOS Photos に保存可能）
-  if (typeof navigator.share === 'function') {
+  // ① File 共有 API（iOS 15+ / Android Chrome）
+  const canShareFiles = navigator.canShare && (() => {
+    try { return navigator.canShare({ files: [file] }); } catch (_) { return false; }
+  })();
+
+  if (canShareFiles) {
     try {
       await navigator.share({ files: [file] });
       return;
     } catch (e) {
-      if (e.name === 'AbortError') return; // ユーザーがキャンセル
-      // share 失敗時はダウンロードへ
+      if (e.name === 'AbortError') return;
     }
   }
 
-  // Android / Desktop: ダウンロード
+  // ② iOS フォールバック：新タブで画像を開き長押し保存を案内
+  if (isIOS) {
+    window.open(capturedUrl, '_blank');
+    showToast('画像を長押し →「写真に追加」で保存');
+    return;
+  }
+
+  // ③ Android / Desktop：ダウンロード
   const url = URL.createObjectURL(file);
   const a = document.createElement('a');
   a.href = url;

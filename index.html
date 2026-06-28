@@ -110,9 +110,29 @@
     </div>
 
     <div id="preview-bottom-bar">
-      <button id="retake-btn">← 撮り直し</button>
-      <button id="save-btn">↓ 保存</button>
-      <button id="share-btn">↑ 共有</button>
+      <button id="retake-btn" class="preview-btn">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        <span>撮り直し</span>
+      </button>
+      <button id="save-btn" class="preview-btn">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>保存</span>
+      </button>
+      <button id="share-btn" class="preview-btn">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+          <polyline points="16 6 12 2 8 6"/>
+          <line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+        <span>共有</span>
+      </button>
     </div>
 
   </div><!-- /preview-screen -->

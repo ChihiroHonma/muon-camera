@@ -324,57 +324,43 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 16px 24px env(safe-area-inset-bottom, 20px);
+  padding: 20px 24px env(safe-area-inset-bottom, 20px);
   background: rgba(0,0,0,0.8);
   flex-shrink: 0;
 }
 
-/* Retake button */
-#retake-btn {
-  background: rgba(255,255,255,0.15);
-  border: 1.5px solid rgba(255,255,255,0.4);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 14px 22px;
-  border-radius: 14px;
+.preview-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 80px;
+  height: 80px;
+  border: none;
+  border-radius: 20px;
   cursor: pointer;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  transition: opacity 0.15s, transform 0.1s;
 }
 
-#retake-btn:active {
-  opacity: 0.7;
+.preview-btn:active {
+  opacity: 0.75;
+  transform: scale(0.94);
 }
 
-/* Save button */
+#retake-btn {
+  background: rgba(255,255,255,0.18);
+}
+
 #save-btn {
   background: #30D158;
-  border: none;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 14px 22px;
-  border-radius: 14px;
-  cursor: pointer;
 }
 
-#save-btn:active {
-  opacity: 0.8;
-}
-
-/* Share button */
 #share-btn {
   background: #0A84FF;
-  border: none;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 14px 22px;
-  border-radius: 14px;
-  cursor: pointer;
-}
-
-#share-btn:active {
-  opacity: 0.8;
 }
 
 /* Toast notification */
