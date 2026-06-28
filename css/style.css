@@ -214,6 +214,31 @@ html, body {
   transition: width 0.2s ease, height 0.2s ease;
 }
 
+/* ── Full mode: viewfinder covers entire screen ── */
+#camera-screen.ratio-full #viewfinder {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  flex: none;
+}
+
+#camera-screen.ratio-full #top-bar {
+  position: relative;
+  z-index: 10;
+  background: rgba(0,0,0,0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+#camera-screen.ratio-full #bottom-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 10;
+  background: rgba(0,0,0,0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
 /* Shutter button */
 #shutter-btn {
   width: 76px;

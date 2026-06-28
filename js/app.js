@@ -587,23 +587,29 @@ const RATIO_LABELS = { '1-1': '1:1', '3-4': '3:4', '9-16': '9:16', 'full': '□'
 const RATIO_VALUES = { '1-1': 1/1, '3-4': 3/4, '9-16': 9/16 };
 
 function applyRatioBox() {
+  // Full mode: viewfinder covers entire screen, bars become overlays
+  if (currentRatio === 'full') {
+    cameraScreen.classList.add('ratio-full');
+    ratioBox.style.width  = '100%';
+    ratioBox.style.height = '100%';
+    return;
+  }
+
+  cameraScreen.classList.remove('ratio-full');
+
   const vfW = viewfinder.offsetWidth;
   const vfH = viewfinder.offsetHeight;
   if (!vfW || !vfH) return;
 
+  const target = RATIO_VALUES[currentRatio];
+  const testH  = vfW / target;
   let boxW, boxH;
-  if (currentRatio === 'full') {
-    boxW = vfW; boxH = vfH;
+  if (testH <= vfH) {
+    boxW = vfW;
+    boxH = Math.round(testH);
   } else {
-    const target = RATIO_VALUES[currentRatio]; // width / height
-    const testH = vfW / target;
-    if (testH <= vfH) {
-      boxW = vfW;
-      boxH = Math.round(testH);
-    } else {
-      boxH = vfH;
-      boxW = Math.round(vfH * target);
-    }
+    boxH = vfH;
+    boxW = Math.round(vfH * target);
   }
 
   ratioBox.style.width  = boxW + 'px';
