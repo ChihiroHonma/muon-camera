@@ -35,6 +35,7 @@ const toast          = document.getElementById('toast');
 
 const ratioBtn       = document.getElementById('ratio-btn');
 const ratioBox       = document.getElementById('ratio-box');
+const viewfinder     = document.getElementById('viewfinder');
 const flashBtn       = document.getElementById('flash-btn');
 const timerBtn       = document.getElementById('timer-btn');
 const gridBtn        = document.getElementById('grid-btn');
@@ -397,7 +398,10 @@ function drawGrid() {
   }
 }
 
-window.addEventListener('resize', () => { if (gridVisible) drawGrid(); });
+window.addEventListener('resize', () => {
+  if (gridVisible) drawGrid();
+  applyRatioBox();
+});
 
 // ── Video recording ────────────────────────────────────
 
@@ -566,12 +570,37 @@ function showToast(msg) {
 
 const RATIO_CYCLE  = ['1-1', '3-4', '9-16', 'full'];
 const RATIO_LABELS = { '1-1': '1:1', '3-4': '3:4', '9-16': '9:16', 'full': '□' };
+const RATIO_VALUES = { '1-1': 1/1, '3-4': 3/4, '9-16': 9/16 };
+
+function applyRatioBox() {
+  const vfW = viewfinder.offsetWidth;
+  const vfH = viewfinder.offsetHeight;
+  if (!vfW || !vfH) return;
+
+  let boxW, boxH;
+  if (currentRatio === 'full') {
+    boxW = vfW; boxH = vfH;
+  } else {
+    const target = RATIO_VALUES[currentRatio]; // width / height
+    const testH = vfW / target;
+    if (testH <= vfH) {
+      boxW = vfW;
+      boxH = Math.round(testH);
+    } else {
+      boxH = vfH;
+      boxW = Math.round(vfH * target);
+    }
+  }
+
+  ratioBox.style.width  = boxW + 'px';
+  ratioBox.style.height = boxH + 'px';
+}
 
 function cycleRatio() {
   const idx = RATIO_CYCLE.indexOf(currentRatio);
   currentRatio = RATIO_CYCLE[(idx + 1) % RATIO_CYCLE.length];
   ratioBtn.querySelector('.ratio-label').textContent = RATIO_LABELS[currentRatio];
-  ratioBox.className = `ratio-${currentRatio}`;
+  applyRatioBox();
 }
 
 ratioBtn.addEventListener('click', cycleRatio);
@@ -595,3 +624,5 @@ if ('serviceWorker' in navigator) {
 // ── Start ──────────────────────────────────────────────
 
 initCamera();
+// Apply initial ratio box size after first layout paint
+requestAnimationFrame(() => requestAnimationFrame(applyRatioBox));
