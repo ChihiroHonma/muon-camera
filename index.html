@@ -27,6 +27,20 @@
         <span class="icon">⏱</span>
         <span class="label">タイマー</span>
       </button>
+      <button id="flip-btn" class="icon-btn" aria-label="カメラ切替">
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.5 4.5 C8.5 2 12 1.5 15 3"/>
+            <polyline points="14.5,0.5 14.5,3 17,3"/>
+            <path d="M17.5 19.5 C15.5 22 12 22.5 9 21"/>
+            <polyline points="9.5,23.5 9.5,21 7,21"/>
+            <rect x="3" y="8" width="18" height="12" rx="2"/>
+            <circle cx="12" cy="14" r="3.5"/>
+            <path d="M9.5 8V6.5C9.5 6.2 9.7 6 10 6h4c.3 0 .5.2.5.5V8"/>
+          </svg>
+        </span>
+        <span class="label">切替</span>
+      </button>
       <button id="grid-btn" class="icon-btn">
         <span class="icon">⊞</span>
         <span class="label">グリッド</span>
@@ -78,27 +92,11 @@
         </svg>
       </button>
 
-      <!-- Flip & Video stacked -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-        <button id="flip-btn" class="icon-btn" aria-label="カメラ切替">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6.5 4.5 C8.5 2 12 1.5 15 3"/>
-              <polyline points="14.5,0.5 14.5,3 17,3"/>
-              <path d="M17.5 19.5 C15.5 22 12 22.5 9 21"/>
-              <polyline points="9.5,23.5 9.5,21 7,21"/>
-              <rect x="3" y="8" width="18" height="12" rx="2"/>
-              <circle cx="12" cy="14" r="3.5"/>
-              <path d="M9.5 8V6.5C9.5 6.2 9.7 6 10 6h4c.3 0 .5.2.5.5V8"/>
-            </svg>
-          </span>
-          <span class="label">切替</span>
-        </button>
-        <button id="video-btn" class="icon-btn" aria-label="動画">
-          <span class="icon"><span></span></span>
-          <span class="label">動画</span>
-        </button>
-      </div>
+      <!-- Video button -->
+      <button id="video-btn" class="icon-btn" aria-label="動画">
+        <span class="icon"><span></span></span>
+        <span class="label">動画</span>
+      </button>
     </div>
 
   </div><!-- /camera-screen -->
