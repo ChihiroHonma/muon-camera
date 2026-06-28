@@ -189,6 +189,14 @@ html, body {
   pointer-events: none;
 }
 
+/* Flash OFF: strike-through line visible by default, hidden when ON */
+.flash-strike {
+  display: block;
+}
+#flash-btn.active .flash-strike {
+  display: none;
+}
+
 /* Ratio button label (bordered badge) */
 .ratio-label {
   display: inline-flex;
