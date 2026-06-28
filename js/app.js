@@ -47,6 +47,7 @@ const previewScreen  = document.getElementById('preview-screen');
 const previewImage   = document.getElementById('preview-image');
 const previewVideo   = document.getElementById('preview-video');
 const shareBtn       = document.getElementById('share-btn');
+const saveBtn        = document.getElementById('save-btn');
 const retakeBtn      = document.getElementById('retake-btn');
 
 // ── Camera init ────────────────────────────────────────
@@ -411,13 +412,49 @@ thumbnailBtn.addEventListener('click', () => {
   if (capturedUrl) showPreview();
 });
 
-// ── Share ──────────────────────────────────────────────
+// ── 共通：ファイル生成 ─────────────────────────────────
+
+function buildFile() {
+  const ext = capturedType === 'photo' ? 'jpg' : (capturedMime?.includes('webm') ? 'webm' : 'mp4');
+  const fileName = `photo_${Date.now()}.${ext}`;
+  return new File([capturedBlob], fileName, { type: capturedMime });
+}
+
+// ── 保存 ───────────────────────────────────────────────
+
+saveBtn.addEventListener('click', async () => {
+  if (!capturedBlob) return;
+  const file = buildFile();
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+    // iOS: share sheet を「保存」に特化して開く
+    try {
+      await navigator.share({ files: [file] });
+    } catch (e) {
+      if (e.name !== 'AbortError') fallbackDownload(file);
+    }
+  } else {
+    // Android / Desktop: 直接ダウンロード
+    fallbackDownload(file);
+  }
+});
+
+function fallbackDownload(file) {
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = file.name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('ダウンロードしました');
+}
+
+// ── 共有 ───────────────────────────────────────────────
 
 shareBtn.addEventListener('click', async () => {
   if (!capturedBlob) return;
-  const ext  = capturedType === 'photo' ? 'jpg' : (capturedMime?.includes('webm') ? 'webm' : 'mp4');
-  const fileName = `photo_${Date.now()}.${ext}`;
-  const file = new File([capturedBlob], fileName, { type: capturedMime });
+  const file = buildFile();
 
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
@@ -427,12 +464,7 @@ shareBtn.addEventListener('click', async () => {
       if (e.name === 'AbortError') return;
     }
   }
-  // Fallback: download
-  const a = document.createElement('a');
-  a.href = capturedUrl;
-  a.download = fileName;
-  a.click();
-  showToast('ダウンロードしました');
+  fallbackDownload(file);
 });
 
 // ── Retake ─────────────────────────────────────────────

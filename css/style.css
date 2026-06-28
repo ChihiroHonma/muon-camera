@@ -345,6 +345,22 @@ html, body {
   opacity: 0.7;
 }
 
+/* Save button */
+#save-btn {
+  background: #30D158;
+  border: none;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 14px 22px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+#save-btn:active {
+  opacity: 0.8;
+}
+
 /* Share button */
 #share-btn {
   background: #0A84FF;
@@ -352,12 +368,9 @@ html, body {
   color: #fff;
   font-size: 15px;
   font-weight: 600;
-  padding: 14px 28px;
+  padding: 14px 22px;
   border-radius: 14px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 #share-btn:active {
