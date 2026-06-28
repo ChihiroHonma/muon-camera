@@ -12,6 +12,7 @@ let zoomValue = 1.0;
 let zoomMin = 1.0;
 let zoomMax = 5.0;
 let hwZoomSupported = false;
+let currentMode = 'photo'; // 'photo' | 'video'
 let isRecording = false;
 let mediaRecorder = null;
 let recordedChunks = [];
@@ -37,8 +38,8 @@ const gridBtn        = document.getElementById('grid-btn');
 const brightnessSlider = document.getElementById('brightness-slider');
 const zoomSlider     = document.getElementById('zoom-slider');
 const shutterBtn     = document.getElementById('shutter-btn');
+const shutterIcon    = document.getElementById('shutter-icon');
 const flipBtn        = document.getElementById('flip-btn');
-const videoBtn       = document.getElementById('video-btn');
 const thumbnailBtn   = document.getElementById('thumbnail-btn');
 const thumbnailImg   = document.getElementById('thumbnail-img');
 
@@ -213,19 +214,59 @@ function shootWithTimer() {
   }, 1000);
 }
 
+// ── Shutter UI ─────────────────────────────────────────
+
+const ICON_PHOTO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36">
+  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" fill="#1a1a1a"/>
+  <circle cx="12" cy="13" r="4" fill="rgba(255,255,255,0.6)"/>
+  <circle cx="12" cy="13" r="2.4" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+</svg>`;
+
+const ICON_STOP = `<svg viewBox="0 0 24 24" width="28" height="28">
+  <rect x="5" y="5" width="14" height="14" rx="3" fill="#fff"/>
+</svg>`;
+
+function updateShutterUI() {
+  if (currentMode === 'photo') {
+    shutterBtn.classList.remove('video-mode');
+    shutterIcon.innerHTML = ICON_PHOTO;
+  } else {
+    shutterBtn.classList.add('video-mode');
+    shutterIcon.innerHTML = isRecording ? ICON_STOP : '';
+  }
+}
+
+// ── Mode switcher ──────────────────────────────────────
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    if (mode === currentMode) return;
+    if (isRecording) stopRecording();
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    updateShutterUI();
+  });
+});
+
 // ── Burst mode ─────────────────────────────────────────
 
 shutterBtn.addEventListener('pointerdown', () => {
+  if (currentMode === 'video') return;
   if (isRecording) return;
   burstTimer = setTimeout(() => {
     isBurst = true;
     shutterBtn.classList.add('burst-mode');
-    capturePhoto(); // immediate first shot
+    capturePhoto();
     burstInterval = setInterval(capturePhoto, 400);
   }, 600);
 });
 
 shutterBtn.addEventListener('pointerup', () => {
+  if (currentMode === 'video') {
+    toggleRecording();
+    return;
+  }
   clearTimeout(burstTimer);
   if (isBurst) {
     clearInterval(burstInterval);
@@ -237,6 +278,7 @@ shutterBtn.addEventListener('pointerup', () => {
 });
 
 shutterBtn.addEventListener('pointercancel', () => {
+  if (currentMode === 'video') return;
   clearTimeout(burstTimer);
   clearInterval(burstInterval);
   shutterBtn.classList.remove('burst-mode');
@@ -355,15 +397,13 @@ function startRecording() {
   };
   mediaRecorder.start(200);
   isRecording = true;
-  videoBtn.classList.add('recording');
-  videoBtn.querySelector('.label').textContent = '停止';
+  updateShutterUI();
 }
 
 function stopRecording() {
   mediaRecorder.stop();
   isRecording = false;
-  videoBtn.classList.remove('recording');
-  videoBtn.querySelector('.label').textContent = '動画';
+  updateShutterUI();
 }
 
 // ── Capture management ─────────────────────────────────
@@ -501,7 +541,6 @@ flashBtn.addEventListener('click', toggleFlash);
 timerBtn.addEventListener('click', cycleTimer);
 gridBtn.addEventListener('click', toggleGrid);
 flipBtn.addEventListener('click', flipCamera);
-videoBtn.addEventListener('click', toggleRecording);
 
 // Prevent default scroll/zoom on viewfinder
 viewfinder.addEventListener('touchmove', e => {
