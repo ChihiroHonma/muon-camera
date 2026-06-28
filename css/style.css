@@ -289,14 +289,6 @@ html, body {
   flex-direction: column;
 }
 
-#preview-top-bar {
-  display: flex;
-  align-items: center;
-  padding: env(safe-area-inset-top, 12px) 16px 12px;
-  background: rgba(0,0,0,0.8);
-  flex-shrink: 0;
-}
-
 #preview-media {
   flex: 1;
   display: flex;
@@ -337,19 +329,35 @@ html, body {
   flex-shrink: 0;
 }
 
-/* Share button (prominent) */
+/* Retake button */
+#retake-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 14px 22px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+#retake-btn:active {
+  opacity: 0.7;
+}
+
+/* Share button */
 #share-btn {
   background: #0A84FF;
   border: none;
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  padding: 14px 40px;
+  padding: 14px 28px;
   border-radius: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 #share-btn:active {
