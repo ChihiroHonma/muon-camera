@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="無音カメラ">
+  <meta name="theme-color" content="#000000">
+  <title>無音カメラ</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/icon.svg">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+  <!-- ===== CAMERA SCREEN ===== -->
+  <div id="camera-screen" class="screen">
+
+    <!-- Top bar -->
+    <div id="top-bar">
+      <button id="flash-btn" class="icon-btn">
+        <span class="icon">⚡</span>
+        <span class="label">フラッシュ</span>
+      </button>
+      <button id="timer-btn" class="icon-btn">
+        <span class="icon">⏱</span>
+        <span class="label">タイマー</span>
+      </button>
+      <button id="grid-btn" class="icon-btn">
+        <span class="icon">⊞</span>
+        <span class="label">グリッド</span>
+      </button>
+    </div>
+
+    <!-- Viewfinder -->
+    <div id="viewfinder">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="grid-canvas"></canvas>
+      <div id="countdown-display"></div>
+      <!-- Shutter flash overlay -->
+      <div id="shutter-flash" style="
+        position:absolute;inset:0;background:#fff;opacity:0;
+        pointer-events:none;transition:opacity 0.08s;z-index:4;
+      "></div>
+
+      <!-- Sliders (right side, inside viewfinder) -->
+      <div id="slider-panel">
+      <div class="slider-wrap">
+        <span class="icon">☀</span>
+        <input type="range" id="brightness-slider"
+          min="0.5" max="2.0" step="0.05" value="1.0"
+          aria-label="明るさ">
+      </div>
+      <div class="slider-wrap">
+        <span class="icon">🔍</span>
+        <input type="range" id="zoom-slider"
+          min="1" max="5" step="0.1" value="1"
+          aria-label="ズーム">
+      </div>
+    </div><!-- /slider-panel -->
+    </div><!-- /viewfinder -->
+
+    <!-- Bottom bar -->
+    <div id="bottom-bar">
+      <!-- Thumbnail -->
+      <button id="thumbnail-btn" aria-label="最後の撮影">
+        <img id="thumbnail-img" alt="サムネイル">
+        <span id="thumbnail-placeholder">📷</span>
+      </button>
+
+      <!-- Shutter -->
+      <button id="shutter-btn" aria-label="撮影"></button>
+
+      <!-- Flip & Video stacked -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <button id="flip-btn" class="icon-btn" aria-label="カメラ切替">
+          <span class="icon">🔄</span>
+          <span class="label">切替</span>
+        </button>
+        <button id="video-btn" class="icon-btn" aria-label="動画">
+          <span class="icon"><span></span></span>
+          <span class="label">動画</span>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /camera-screen -->
+
+  <!-- ===== PREVIEW SCREEN ===== -->
+  <div id="preview-screen" class="screen hidden">
+
+    <div id="preview-top-bar">
+      <button id="retake-btn" class="icon-btn" style="font-size:14px;gap:4px;">
+        <span class="icon">←</span>
+        <span class="label" style="font-size:13px;">撮り直し</span>
+      </button>
+    </div>
+
+    <div id="preview-media">
+      <img id="preview-image" alt="プレビュー">
+      <video id="preview-video" playsinline muted loop></video>
+    </div>
+
+    <div id="preview-bottom-bar">
+      <button id="share-btn">
+        ↑&nbsp; 共有・保存
+      </button>
+    </div>
+
+  </div><!-- /preview-screen -->
+
+  <!-- Hidden canvas for capture -->
+  <canvas id="capture-canvas"></canvas>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>

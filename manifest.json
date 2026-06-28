@@ -1,0 +1,18 @@
+{
+  "name": "無音カメラ",
+  "short_name": "無音カメラ",
+  "description": "シャッター音なしで撮影できるカメラアプリ",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
