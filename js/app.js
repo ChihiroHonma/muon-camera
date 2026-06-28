@@ -222,6 +222,11 @@ const ICON_PHOTO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
   <circle cx="12" cy="13" r="2.4" fill="none" stroke="#1a1a1a" stroke-width="1"/>
 </svg>`;
 
+const ICON_VIDEO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36">
+  <rect x="1" y="5" width="14" height="14" rx="2.5" fill="#fff"/>
+  <polygon points="16,8.5 23,6 23,18 16,15.5" fill="#fff"/>
+</svg>`;
+
 const ICON_STOP = `<svg viewBox="0 0 24 24" width="28" height="28">
   <rect x="5" y="5" width="14" height="14" rx="3" fill="#fff"/>
 </svg>`;
@@ -232,7 +237,7 @@ function updateShutterUI() {
     shutterIcon.innerHTML = ICON_PHOTO;
   } else {
     shutterBtn.classList.add('video-mode');
-    shutterIcon.innerHTML = isRecording ? ICON_STOP : '';
+    shutterIcon.innerHTML = isRecording ? ICON_STOP : ICON_VIDEO;
   }
 }
 
