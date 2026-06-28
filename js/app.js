@@ -425,30 +425,29 @@ function buildFile() {
 saveBtn.addEventListener('click', async () => {
   if (!capturedBlob) return;
   const file = buildFile();
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  if (isIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-    // iOS: share sheet を「保存」に特化して開く
+  // navigator.share({ files }) が使えれば開く（iOS Photos に保存可能）
+  if (typeof navigator.share === 'function') {
     try {
       await navigator.share({ files: [file] });
+      return;
     } catch (e) {
-      if (e.name !== 'AbortError') fallbackDownload(file);
+      if (e.name === 'AbortError') return; // ユーザーがキャンセル
+      // share 失敗時はダウンロードへ
     }
-  } else {
-    // Android / Desktop: 直接ダウンロード
-    fallbackDownload(file);
   }
-});
 
-function fallbackDownload(file) {
+  // Android / Desktop: ダウンロード
   const url = URL.createObjectURL(file);
   const a = document.createElement('a');
   a.href = url;
   a.download = file.name;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 5000);
   showToast('ダウンロードしました');
-}
+});
 
 // ── 共有 ───────────────────────────────────────────────
 
