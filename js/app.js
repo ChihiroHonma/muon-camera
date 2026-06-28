@@ -12,7 +12,8 @@ let zoomValue = 1.0;
 let zoomMin = 1.0;
 let zoomMax = 5.0;
 let hwZoomSupported = false;
-let currentMode = 'photo'; // 'photo' | 'video'
+let currentMode = 'photo';  // 'photo' | 'video'
+let currentRatio = '1-1'; // '1-1' | '3-4' | '9-16' | 'full'
 let isRecording = false;
 let mediaRecorder = null;
 let recordedChunks = [];
@@ -32,6 +33,8 @@ const gridCanvas     = document.getElementById('grid-canvas');
 const countdownEl    = document.getElementById('countdown-display');
 const toast          = document.getElementById('toast');
 
+const ratioBtn       = document.getElementById('ratio-btn');
+const ratioBox       = document.getElementById('ratio-box');
 const flashBtn       = document.getElementById('flash-btn');
 const timerBtn       = document.getElementById('timer-btn');
 const gridBtn        = document.getElementById('grid-btn');
@@ -114,24 +117,41 @@ async function initCamera() {
 // ── Photo capture (silent) ─────────────────────────────
 
 function capturePhoto() {
-  const w = video.videoWidth;
-  const h = video.videoHeight;
-  if (!w || !h) return;
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if (!vw || !vh) return;
 
-  captureCanvas.width  = w;
-  captureCanvas.height = h;
+  // Crop to selected aspect ratio
+  const RATIO_MAP = { '1-1': 1, '3-4': 3/4, '9-16': 9/16 };
+  let cropW = vw, cropH = vh;
+
+  if (currentRatio !== 'full') {
+    const target = RATIO_MAP[currentRatio];
+    if (target > vw / vh) {
+      cropW = vw;
+      cropH = Math.round(vw / target);
+    } else {
+      cropH = vh;
+      cropW = Math.round(vh * target);
+    }
+  }
+
+  const sx = Math.round((vw - cropW) / 2);
+  const sy = Math.round((vh - cropH) / 2);
+
+  captureCanvas.width  = cropW;
+  captureCanvas.height = cropH;
   const ctx = captureCanvas.getContext('2d');
 
   ctx.save();
   ctx.filter = `brightness(${brightnessValue})`;
 
-  // Flip back front camera (CSS mirrors preview but canvas must match)
   if (currentFacing === 'user') {
-    ctx.translate(w, 0);
+    ctx.translate(cropW, 0);
     ctx.scale(-1, 1);
   }
 
-  ctx.drawImage(video, 0, 0, w, h);
+  ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, cropW, cropH);
   ctx.restore();
 
   captureCanvas.toBlob(blob => {
@@ -541,6 +561,20 @@ function showToast(msg) {
 }
 
 // ── Event bindings ─────────────────────────────────────
+
+// ── Aspect ratio ───────────────────────────────────────
+
+const RATIO_CYCLE  = ['1-1', '3-4', '9-16', 'full'];
+const RATIO_LABELS = { '1-1': '1:1', '3-4': '3:4', '9-16': '9:16', 'full': '□' };
+
+function cycleRatio() {
+  const idx = RATIO_CYCLE.indexOf(currentRatio);
+  currentRatio = RATIO_CYCLE[(idx + 1) % RATIO_CYCLE.length];
+  ratioBtn.querySelector('.ratio-label').textContent = RATIO_LABELS[currentRatio];
+  ratioBox.className = `ratio-${currentRatio}`;
+}
+
+ratioBtn.addEventListener('click', cycleRatio);
 
 flashBtn.addEventListener('click', toggleFlash);
 timerBtn.addEventListener('click', cycleTimer);

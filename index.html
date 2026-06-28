@@ -19,6 +19,9 @@
 
     <!-- Top bar -->
     <div id="top-bar">
+      <button id="ratio-btn" class="icon-btn" aria-label="画角">
+        <span class="icon"><span class="ratio-label">1:1</span></span>
+      </button>
       <button id="flash-btn" class="icon-btn">
         <span class="icon">⚡</span>
         <span class="label">フラッシュ</span>
@@ -49,16 +52,19 @@
 
     <!-- Viewfinder -->
     <div id="viewfinder">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="grid-canvas"></canvas>
-      <div id="countdown-display"></div>
-      <!-- Shutter flash overlay -->
-      <div id="shutter-flash" style="
-        position:absolute;inset:0;background:#fff;opacity:0;
-        pointer-events:none;transition:opacity 0.08s;z-index:4;
-      "></div>
 
-      <!-- Sliders (right side, inside viewfinder) -->
+      <!-- Ratio-constrained crop area -->
+      <div id="ratio-box" class="ratio-1-1">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="grid-canvas"></canvas>
+        <div id="countdown-display"></div>
+        <div id="shutter-flash" style="
+          position:absolute;inset:0;background:#fff;opacity:0;
+          pointer-events:none;transition:opacity 0.08s;z-index:4;
+        "></div>
+      </div>
+
+      <!-- Sliders (right side, fixed to viewfinder) -->
       <div id="slider-panel">
       <div class="slider-wrap">
         <span class="icon">☀</span>
