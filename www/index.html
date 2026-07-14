@@ -64,6 +64,10 @@
         <video id="video" autoplay playsinline muted></video>
         <canvas id="grid-canvas"></canvas>
         <div id="countdown-display"></div>
+        <div id="recording-indicator" class="hidden" aria-live="polite">
+          <span class="rec-dot"></span>
+          <span id="recording-time">00:00</span>
+        </div>
         <div id="shutter-flash" style="
           position:absolute;inset:0;background:#fff;opacity:0;
           pointer-events:none;transition:opacity 0.08s;z-index:4;
@@ -162,6 +166,7 @@
   <!-- Toast -->
   <div id="toast"></div>
 
+  <script src="./js/capacitor.js"></script>
   <script src="./js/app.js"></script>
 </body>
 </html>

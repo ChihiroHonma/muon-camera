@@ -1,0 +1,17 @@
+# Node
+node_modules/
+
+# Capacitor iOS build artifacts (npx cap sync で www から再生成される)
+ios/App/App/public/
+ios/App/Pods/
+ios/App/output/
+ios/DerivedData/
+ios/App/App/capacitor.config.json
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+.DS_Store
+
+# OS
+Thumbs.db

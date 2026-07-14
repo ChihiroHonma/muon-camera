@@ -78,6 +78,42 @@ html, body {
   z-index: 3;
 }
 
+/* Recording indicator (App Store Guideline 2.5.14: 記録中の視覚的明示) */
+#recording-indicator {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(0,0,0,0.55);
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  z-index: 5;
+  pointer-events: none;
+}
+
+#recording-indicator.hidden {
+  display: none;
+}
+
+.rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3b30;
+  animation: rec-blink 1s infinite;
+}
+
+@keyframes rec-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
 /* Slider panel (right side, inside viewfinder) */
 #slider-panel {
   position: absolute;

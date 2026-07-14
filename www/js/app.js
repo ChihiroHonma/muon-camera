@@ -25,6 +25,8 @@ let burstTimer = null;
 let burstInterval = null;
 let isBurst = false;
 let countdownTimer = null;
+let recordingTimer = null;
+let recordingSeconds = 0;
 
 // ── DOM ────────────────────────────────────────────────
 const video          = document.getElementById('video');
@@ -46,6 +48,19 @@ const shutterIcon    = document.getElementById('shutter-icon');
 const flipBtn        = document.getElementById('flip-btn');
 const thumbnailBtn   = document.getElementById('thumbnail-btn');
 const thumbnailImg   = document.getElementById('thumbnail-img');
+
+// ── Native shutter sound (manner-mode linked, iOS only) ─
+// ネイティブアプリ実行時のみ有効。Web版では何もしない（従来通り常時無音）。
+const ShutterSound = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
+  ? window.Capacitor.registerPlugin('ShutterSound')
+  : null;
+
+function playShutterSound() {
+  if (ShutterSound) ShutterSound.play().catch(() => {});
+}
+
+const recordingIndicator = document.getElementById('recording-indicator');
+const recordingTimeEl    = document.getElementById('recording-time');
 
 const cameraScreen   = document.getElementById('camera-screen');
 const previewScreen  = document.getElementById('preview-screen');
@@ -162,6 +177,7 @@ function capturePhoto() {
     setCapture('photo', blob, 'image/jpeg');
     showPreview();
     flashShutter();
+    playShutterSound();
   }, 'image/jpeg', 0.95);
 }
 
@@ -429,12 +445,33 @@ function startRecording() {
   mediaRecorder.start(200);
   isRecording = true;
   updateShutterUI();
+  startRecordingIndicator();
 }
 
 function stopRecording() {
   mediaRecorder.stop();
   isRecording = false;
   updateShutterUI();
+  stopRecordingIndicator();
+}
+
+// ── Recording indicator (視覚的な記録中表示) ───────────
+
+function startRecordingIndicator() {
+  recordingSeconds = 0;
+  recordingTimeEl.textContent = '00:00';
+  recordingIndicator.classList.remove('hidden');
+  recordingTimer = setInterval(() => {
+    recordingSeconds++;
+    const m = String(Math.floor(recordingSeconds / 60)).padStart(2, '0');
+    const s = String(recordingSeconds % 60).padStart(2, '0');
+    recordingTimeEl.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+function stopRecordingIndicator() {
+  clearInterval(recordingTimer);
+  recordingIndicator.classList.add('hidden');
 }
 
 // ── Capture management ─────────────────────────────────

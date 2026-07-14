@@ -1,0 +1,19 @@
+{
+  "name": "zero-cam",
+  "version": "1.0.0",
+  "description": "ZERO Cam - iOS silent camera app (manner-mode linked)",
+  "private": true,
+  "scripts": {
+    "sync": "cap sync",
+    "postinstall": "node -e \"require('fs').copyFileSync('node_modules/@capacitor/core/dist/capacitor.js', 'www/js/capacitor.js')\""
+  },
+  "dependencies": {
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "sharp": "^0.35.3"
+  }
+}
