@@ -695,8 +695,10 @@ viewfinder.addEventListener('touchmove', e => {
 }, { passive: false });
 
 // ── PWA install ────────────────────────────────────────
-
-if ('serviceWorker' in navigator) {
+// Service Worker は Web(PWA)版のオフライン対応専用。
+// ネイティブアプリ(Capacitor)ではアセットをローカルから読むため不要で、
+// むしろ Cache First がアプリ更新後も古いJS/CSSを配信し続けるリスクがあるため登録しない。
+if (!isNativeApp && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(console.error);
 }
 

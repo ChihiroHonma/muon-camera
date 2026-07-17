@@ -1,4 +1,4 @@
-const CACHE_NAME = 'silent-camera-v11';
+const CACHE_NAME = 'silent-camera-v12';
 const ASSETS = [
   './index.html',
   './css/style.css',
