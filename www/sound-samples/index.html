@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>シャッター音サンプル試聴</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    background: #111;
+    color: #fff;
+  }
+  h1 { font-size: 1.2em; }
+  .sample {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .sample .label { font-weight: 600; }
+  .sample .desc { font-size: 0.85em; color: #999; margin-top: 4px; }
+  button {
+    background: #fff;
+    color: #111;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 1.3em;
+    flex-shrink: 0;
+  }
+  button:active { background: #ccc; }
+</style>
+</head>
+<body>
+
+<h1>シャッター音サンプル試聴</h1>
+<p style="color:#999;font-size:0.9em;">気に入った番号をClaudeに伝えてください。</p>
+
+<div class="sample">
+  <div><div class="label">サンプル1：一眼レフ風</div><div class="desc">ミラーアップ＋シャッター＋ミラーダウンの3段階、重厚</div></div>
+  <button onclick="play('sample1-dslr.wav')">▶</button>
+</div>
+<div class="sample">
+  <div><div class="label">サンプル2：ミラーレス/スマホ風</div><div class="desc">シンプルな「カシャ」、軽め</div></div>
+  <button onclick="play('sample2-mirrorless.wav')">▶</button>
+</div>
+<div class="sample">
+  <div><div class="label">サンプル3：フィルムカメラ風</div><div class="desc">「カシャコン」、やや長めで巻き上げ感</div></div>
+  <button onclick="play('sample3-film.wav')">▶</button>
+</div>
+<div class="sample">
+  <div><div class="label">サンプル4：高速シャッター風</div><div class="desc">非常に短く鋭い「タッ」</div></div>
+  <button onclick="play('sample4-fast.wav')">▶</button>
+</div>
+<div class="sample">
+  <div><div class="label">サンプル5：ソフトシャッター風</div><div class="desc">柔らかめの「コトッ」、控えめ</div></div>
+  <button onclick="play('sample5-soft.wav')">▶</button>
+</div>
+
+<script>
+  let current = null;
+  function play(file) {
+    if (current) { current.pause(); current.currentTime = 0; }
+    current = new Audio(file);
+    current.play();
+  }
+</script>
+
+</body>
+</html>

@@ -561,7 +561,7 @@ saveBtn.addEventListener('click', async () => {
       await PhotoSaver.save({ data: base64, type: capturedType });
       showToast('写真ライブラリに保存しました');
     } catch (e) {
-      showToast('保存に失敗しました');
+      showToast('保存に失敗: ' + (e?.message || e), 8000);
     }
     return;
   }
@@ -630,11 +630,11 @@ retakeBtn.addEventListener('click', () => {
 // ── Toast ──────────────────────────────────────────────
 
 let toastTimer = null;
-function showToast(msg) {
+function showToast(msg, duration = 2500) {
   toast.textContent = msg;
   toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
 }
 
 // ── Event bindings ─────────────────────────────────────
