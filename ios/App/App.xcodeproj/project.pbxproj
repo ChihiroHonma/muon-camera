@@ -13,6 +13,8 @@
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		1A2B3C4D5E6F708192A3B4C6 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F708192A3B4C5 /* MainViewController.swift */; };
 		1A2B3C4D5E6F708192A3B4C8 /* ShutterSoundPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F708192A3B4C7 /* ShutterSoundPlugin.swift */; };
+		2A3B4C5D6E7F809192A3B4C9 /* PhotoSaverPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3B4C5D6E7F809192A3B4C8 /* PhotoSaverPlugin.swift */; };
+		2A3B4C5D6E7F809192A3B4C7 /* shutter.wav in Resources */ = {isa = PBXBuildFile; fileRef = 2A3B4C5D6E7F809192A3B4C6 /* shutter.wav */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
@@ -26,6 +28,8 @@
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F708192A3B4C5 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F708192A3B4C7 /* ShutterSoundPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShutterSoundPlugin.swift; sourceTree = "<group>"; };
+		2A3B4C5D6E7F809192A3B4C8 /* PhotoSaverPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSaverPlugin.swift; sourceTree = "<group>"; };
+		2A3B4C5D6E7F809192A3B4C6 /* shutter.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = shutter.wav; sourceTree = "<group>"; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -70,6 +74,8 @@
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				1A2B3C4D5E6F708192A3B4C5 /* MainViewController.swift */,
 				1A2B3C4D5E6F708192A3B4C7 /* ShutterSoundPlugin.swift */,
+				2A3B4C5D6E7F809192A3B4C8 /* PhotoSaverPlugin.swift */,
+				2A3B4C5D6E7F809192A3B4C6 /* shutter.wav */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -151,6 +157,7 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+				2A3B4C5D6E7F809192A3B4C7 /* shutter.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -164,6 +171,7 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				1A2B3C4D5E6F708192A3B4C6 /* MainViewController.swift in Sources */,
 				1A2B3C4D5E6F708192A3B4C8 /* ShutterSoundPlugin.swift in Sources */,
+				2A3B4C5D6E7F809192A3B4C9 /* PhotoSaverPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

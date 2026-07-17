@@ -49,14 +49,23 @@ const flipBtn        = document.getElementById('flip-btn');
 const thumbnailBtn   = document.getElementById('thumbnail-btn');
 const thumbnailImg   = document.getElementById('thumbnail-img');
 
-// ── Native shutter sound (manner-mode linked, iOS only) ─
-// ネイティブアプリ実行時のみ有効。Web版では何もしない（従来通り常時無音）。
-const ShutterSound = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
-  ? window.Capacitor.registerPlugin('ShutterSound')
-  : null;
+// ── Native plugins (iOS only) ───────────────────────────
+// ネイティブアプリ実行時のみ有効。Web版では何もしない（従来通りの挙動にフォールバック）。
+const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const ShutterSound = isNativeApp ? window.Capacitor.registerPlugin('ShutterSound') : null;
+const PhotoSaver   = isNativeApp ? window.Capacitor.registerPlugin('PhotoSaver')   : null;
 
 function playShutterSound() {
   if (ShutterSound) ShutterSound.play().catch(() => {});
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 const recordingIndicator = document.getElementById('recording-indicator');
@@ -544,6 +553,19 @@ function buildFile() {
 
 saveBtn.addEventListener('click', async () => {
   if (!capturedBlob) return;
+
+  // ネイティブアプリ環境：共有シートを介さず直接フォトライブラリに保存
+  if (PhotoSaver) {
+    try {
+      const base64 = await blobToBase64(capturedBlob);
+      await PhotoSaver.save({ data: base64, type: capturedType });
+      showToast('写真ライブラリに保存しました');
+    } catch (e) {
+      showToast('保存に失敗しました');
+    }
+    return;
+  }
+
   const file = buildFile();
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
