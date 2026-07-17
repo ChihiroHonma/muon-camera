@@ -1,7 +1,7 @@
 {
-  "name": "無音カメラ",
-  "short_name": "無音カメラ",
-  "description": "シャッター音なしで撮影できるカメラアプリ",
+  "name": "ZERO Camera",
+  "short_name": "ZERO Camera",
+  "description": "マナーモード連動で静かに撮影できるカメラアプリ",
   "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "portrait",

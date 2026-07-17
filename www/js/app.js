@@ -184,16 +184,19 @@ function capturePhoto() {
 
   captureCanvas.toBlob(blob => {
     setCapture('photo', blob, 'image/jpeg');
-    showPreview();
     flashShutter();
     playShutterSound();
+    // 連写中はプレビューへ遷移せずカメラ画面に留まる（最後の1枚のみ pointerup で表示）
+    if (!isBurst) showPreview();
   }, 'image/jpeg', 0.95);
 }
 
 function flashShutter() {
+  // ガイドライン2.5.14対応: 撮影(=記録)したことを視覚的に明示する。
+  // マナーモード時は無音になるため、この白フラッシュが唯一の撮影通知になる。
   const flash = document.getElementById('shutter-flash');
-  flash.style.opacity = '0.6';
-  setTimeout(() => { flash.style.opacity = '0'; }, 80);
+  flash.style.opacity = '0.7';
+  setTimeout(() => { flash.style.opacity = '0'; }, 150);
 }
 
 // ── Flash ──────────────────────────────────────────────
