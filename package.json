@@ -1,7 +1,7 @@
 {
   "name": "zero-cam",
   "version": "1.0.0",
-  "description": "ZERO Cam - iOS silent camera app (manner-mode linked)",
+  "description": "ZERO Camera - iOS silent camera app (manner-mode linked)",
   "private": true,
   "scripts": {
     "sync": "cap sync",
