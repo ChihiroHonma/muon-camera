@@ -77,10 +77,12 @@ function playShutterSound() {
 function nativeStartOptions() {
   return {
     position: currentFacing === 'user' ? 'front' : 'rear',
-    toBack: true,          // HTML(UI)を前面、カメラプレビューを背面に
-    disableAudio: false,   // 動画に音声を含めるためマイクも有効化
-    storeToFile: false,    // capture()はbase64で返す（トリミングのため）
-    enableHighResolution: true
+    toBack: true,           // HTML(UI)を前面、カメラプレビューを背面に
+    disableAudio: false,    // 動画に音声を含めるためマイクも有効化
+    storeToFile: false,     // capture()はbase64で返す（トリミングのため）
+    enableHighResolution: true,
+    enableVideoMode: true   // 動画出力を起動時に組み込む。録画開始時のセッション
+                            // 再構成(プレビュー暗転の原因)を回避する。
   };
 }
 
@@ -588,7 +590,6 @@ function toggleRecording() {
 
 async function startRecording() {
   if (useNativeCam) {
-    showToast('録画経路: NATIVE', 3000); // 【一時診断】
     if (recState !== 'idle') return; // 開始/停止処理中の多重操作を防ぐ
     recState = 'starting';
     try {
@@ -606,7 +607,6 @@ async function startRecording() {
     return;
   }
 
-  showToast('録画経路: WEB(getUserMedia)', 3000); // 【一時診断】
   recordedChunks = [];
   const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
   try {
