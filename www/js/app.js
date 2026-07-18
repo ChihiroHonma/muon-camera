@@ -444,8 +444,13 @@ function toggleRecording() {
   isRecording ? stopRecording() : startRecording();
 }
 
-function startRecording() {
+async function startRecording() {
   recordedChunks = [];
+  // 録画前に音声セッションを録音可能な状態に戻す（シャッター音で.ambientに
+  // 変わったまま録画すると音声が無音になるのを防ぐ）。
+  if (ShutterSound && ShutterSound.prepareRecording) {
+    try { await ShutterSound.prepareRecording(); } catch (_) {}
+  }
   const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
   try {
     mediaRecorder = new MediaRecorder(stream, { mimeType });
