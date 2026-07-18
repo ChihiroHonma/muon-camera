@@ -1,17 +1,24 @@
 import Foundation
 import Capacitor
-import AVFoundation
+import AudioToolbox
 
 /**
  * マナーモード連動シャッター音プラグイン。
  *
- * 実機検証の結果、AudioServicesPlaySystemSound(1108)（標準カメラのシャッター音ID）は
- * サイレントスイッチを無視して常に鳴ることが判明した（Appleが盗撮防止のため意図的に
- * 消せない設計にしている可能性が高い）。
- *
- * 対策として、独自の音声ファイル(shutter.wav)を AVAudioPlayer で再生し、
- * AVAudioSession のカテゴリを .ambient に設定する方式に変更した。
- * .ambient はサイレントスイッチに従って自動的に消音されるカテゴリ。
+ * 実装方式の変遷（重要な学び）:
+ * 1. AudioServicesPlaySystemSound(1108) — 標準カメラのシャッター音ID。
+ *    「保護されたサウンド」でサイレントスイッチを無視して常に鳴るためNG。
+ * 2. AVAudioPlayer + AVAudioSession(.ambient) — Web版カメラでは機能したが、
+ *    ネイティブカメラはマイク入力を持つため iOS が音声セッションを録音系
+ *    (.playAndRecord = サイレントスイッチ無視)へ自動構成し、.ambient 設定が
+ *    上書き/拒否されて連動しなくなった。またカテゴリ変更はカメラセッションを
+ *    中断させる副作用もある。
+ * 3. 【現方式】自作 shutter.wav から AudioServicesCreateSystemSoundID で
+ *    カスタムシステムサウンドを作成して再生する。
+ *    - システムサウンド(UIサウンド層)は着信/サイレントスイッチに自動で従う
+ *      (1108が鳴り続けたのは「保護されたID」だったためで、カスタム音は従う)
+ *    - AVAudioSession のカテゴリに依存せず、一切触らないため、
+ *      カメラセッション(マイク入力あり)と干渉しない
  */
 @objc(ShutterSoundPlugin)
 public class ShutterSoundPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -21,23 +28,27 @@ public class ShutterSoundPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "play", returnType: CAPPluginReturnPromise)
     ]
 
-    private var player: AVAudioPlayer?
+    private var soundID: SystemSoundID = 0
 
     @objc func play(_ call: CAPPluginCall) {
-        guard let url = Bundle.main.url(forResource: "shutter", withExtension: "wav") else {
-            call.reject("shutter.wav not found in app bundle")
-            return
+        if soundID == 0 {
+            guard let url = Bundle.main.url(forResource: "shutter", withExtension: "wav") else {
+                call.reject("shutter.wav not found in app bundle")
+                return
+            }
+            let status = AudioServicesCreateSystemSoundID(url as CFURL, &soundID)
+            guard status == kAudioServicesNoError, soundID != 0 else {
+                call.reject("Failed to create system sound (status: \(status))")
+                return
+            }
         }
+        AudioServicesPlaySystemSound(soundID)
+        call.resolve()
+    }
 
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
-            try AVAudioSession.sharedInstance().setActive(true, options: [.notifyOthersOnDeactivation])
-
-            player = try AVAudioPlayer(contentsOf: url)
-            player?.play()
-            call.resolve()
-        } catch {
-            call.reject("Failed to play shutter sound: \(error.localizedDescription)")
+    deinit {
+        if soundID != 0 {
+            AudioServicesDisposeSystemSoundID(soundID)
         }
     }
 }
