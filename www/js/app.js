@@ -568,6 +568,7 @@ saveBtn.addEventListener('click', async () => {
       const base64 = await blobToBase64(capturedBlob);
       await PhotoSaver.save({ data: base64, type: capturedType });
       showToast('写真ライブラリに保存しました');
+      returnToCamera(); // 保存後は自動でカメラに戻る
     } catch (e) {
       showToast('保存に失敗: ' + (e?.message || e), 8000);
     }
@@ -618,22 +619,34 @@ shareBtn.addEventListener('click', async () => {
 
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: '無音カメラ' });
+      await navigator.share({ files: [file], title: 'ZERO Camera' });
+      returnToCamera(); // 共有完了後は自動でカメラに戻る
       return;
     } catch (e) {
-      if (e.name === 'AbortError') return;
+      if (e.name === 'AbortError') { returnToCamera(); return; }
     }
   }
   fallbackDownload(file);
 });
 
-// ── Retake ─────────────────────────────────────────────
+// ── Retake / カメラ復帰 ────────────────────────────────
 
-retakeBtn.addEventListener('click', () => {
+function returnToCamera() {
   previewVideo.pause();
   previewScreen.classList.add('hidden');
   cameraScreen.classList.remove('hidden');
-});
+  // 保存/共有中にiOSのシステムダイアログや共有シートが出ると、
+  // getUserMediaの映像トラックが停止して画面が真っ暗になることがある。
+  // トラックが生きていれば再生を再開、停止していれば再取得する。
+  const track = stream && stream.getVideoTracks()[0];
+  if (track && track.readyState === 'live') {
+    video.play().catch(() => {});
+  } else {
+    initCamera();
+  }
+}
+
+retakeBtn.addEventListener('click', returnToCamera);
 
 // ── Toast ──────────────────────────────────────────────
 
