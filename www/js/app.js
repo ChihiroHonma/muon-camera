@@ -63,6 +63,7 @@ const useNativeCam = !!CameraPreview;
 // ネイティブ録画の状態
 let nativeCamStarted = false;
 let nativeVideoPath = null;   // stopRecordVideoで得た動画ファイルパス(file://)
+let nativeExposureBias = 0;   // ネイティブカメラの露出補正(EV)
 // 録画の状態機械: 'idle' | 'starting' | 'recording' | 'stopping'
 // 開始/停止の非同期処理中の多重操作・状態競合を防ぐ。
 let recState = 'idle';
@@ -201,6 +202,26 @@ async function initNativeCamera() {
     zoomSlider.step = 0.1;
     zoomSlider.value = zoomMin;
     zoomValue = zoomMin;
+
+    // ネイティブではCSSフィルターではなく、カメラ自体の露出補正を使う。
+    // これによりライブプレビュー・写真・動画のすべてへ同じ明るさが反映される。
+    try {
+      const exposure = await CameraPreview.getExposureCompensationRange();
+      const exposureMin = exposure.min ?? -2;
+      const exposureMax = exposure.max ?? 2;
+      nativeExposureBias = Math.min(exposureMax, Math.max(exposureMin, nativeExposureBias));
+      brightnessSlider.min = exposureMin;
+      brightnessSlider.max = exposureMax;
+      brightnessSlider.step = exposure.step || 0.1;
+      brightnessSlider.value = nativeExposureBias;
+      await CameraPreview.setExposureCompensation({ value: nativeExposureBias });
+    } catch (_) {
+      // 露出補正を取得できない端末でも、カメラの基本機能は継続する。
+      brightnessSlider.min = -2;
+      brightnessSlider.max = 2;
+      brightnessSlider.step = 0.1;
+      brightnessSlider.value = 0;
+    }
   } catch (err) {
     showToast('カメラの起動に失敗: ' + (err?.message || err), 8000);
   }
@@ -358,6 +379,7 @@ async function flipCamera() {
   if (useNativeCam) {
     try {
       await CameraPreview.flip();
+      await applyBrightness(nativeExposureBias);
     } catch (_) {
       // flipが使えない場合はプレビューを再起動して切替
       await initNativeCamera();
@@ -545,13 +567,23 @@ function pinchDist(touches) {
 // ── Brightness ─────────────────────────────────────────
 
 brightnessSlider.addEventListener('input', () => {
-  brightnessValue = parseFloat(brightnessSlider.value);
-  video.style.filter = `brightness(${brightnessValue})`;
+  const value = parseFloat(brightnessSlider.value);
+  if (useNativeCam) {
+    nativeExposureBias = value;
+    applyBrightness(value);
+  } else {
+    brightnessValue = value;
+    video.style.filter = `brightness(${brightnessValue})`;
+  }
 });
-// ネイティブプレビューにはCSSフィルタをかけられないため明るさ調整は非対応。スライダーを隠す。
-if (useNativeCam) {
-  const bWrap = brightnessSlider.closest('.slider-wrap');
-  if (bWrap) bWrap.style.display = 'none';
+
+async function applyBrightness(value) {
+  if (!useNativeCam) return;
+  try {
+    await CameraPreview.setExposureCompensation({ value });
+  } catch (_) {
+    // スライダー操作中の一時的な失敗は次のinputで再試行される。
+  }
 }
 
 // ── Grid ───────────────────────────────────────────────
