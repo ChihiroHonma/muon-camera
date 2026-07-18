@@ -31,6 +31,16 @@ body.native-cam #video {
   visibility: hidden; /* getUserMedia用のvideo要素はネイティブでは未使用 */
 }
 
+/* The native preview sits behind the transparent WebView. Mask everything
+   outside the selected ratio box so changing the ratio is visible on iOS. */
+body.native-cam #ratio-box {
+  box-shadow: 0 0 0 200vmax #000;
+}
+
+body.native-cam #camera-screen.ratio-full #ratio-box {
+  box-shadow: none;
+}
+
 /* ========== SCREENS ========== */
 
 .screen {
