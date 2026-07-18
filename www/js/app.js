@@ -831,10 +831,12 @@ shareBtn.addEventListener('click', async () => {
   if (useNativeCam && capturedType === 'video' && nativeVideoPath && CapShare) {
     try {
       await CapShare.share({ title: 'ZERO Camera', files: [nativeVideoPath] });
-      returnToCamera();
+      returnToCamera(); // 共有成功 → 一時ファイル削除してカメラへ戻る
     } catch (e) {
-      // ユーザーキャンセル等はエラーになり得るのでカメラに戻すだけ
-      returnToCamera();
+      // キャンセル・失敗時は動画を削除せずプレビューに留め、再共有/保存できるようにする。
+      // キャンセルは無言、実エラーはトースト表示。
+      const msg = ((e && e.message) || '') + '';
+      if (!/cancel/i.test(msg)) showToast('共有に失敗しました', 4000);
     }
     return;
   }
@@ -859,10 +861,16 @@ shareBtn.addEventListener('click', async () => {
 
 async function cleanupNativeVideo() {
   // 保存/共有/撮り直し後、録画一時ファイルを削除して蓄積を防ぐ
-  if (nativeVideoPath && CameraPreview && CameraPreview.deleteFile) {
-    const p = nativeVideoPath;
-    nativeVideoPath = null;
-    try { await CameraPreview.deleteFile({ path: p }); } catch (_) {}
+  const p = nativeVideoPath;
+  if (!p) return;
+  if (CameraPreview && CameraPreview.deleteFile) {
+    try {
+      await CameraPreview.deleteFile({ path: p });
+      nativeVideoPath = null; // 削除成功時のみ参照をクリア
+    } catch (_) {
+      // 削除失敗時は参照を保持し次回returnToCamera時に再試行できるようにする
+      // （次の録画でonNativeRecordingFinishedが上書きするため蓄積は最小限）。
+    }
   } else {
     nativeVideoPath = null;
   }
