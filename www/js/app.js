@@ -332,6 +332,8 @@ shutterBtn.addEventListener('pointerup', () => {
     clearInterval(burstInterval);
     shutterBtn.classList.remove('burst-mode');
     isBurst = false;
+    // 連写終了時に最後の1枚をプレビュー表示する
+    if (capturedUrl) showPreview();
   } else {
     if (!isRecording) shootWithTimer();
   }
