@@ -185,6 +185,7 @@ async function initNativeCamera() {
   try {
     await CameraPreview.start(nativeStartOptions());
     nativeCamStarted = true;
+    if (window.__updateDbg) window.__updateDbg();
     // フラッシュはネイティブで制御。既定OFF。
     flashSupported = true;
     flashBtn.classList.remove('disabled');
@@ -587,6 +588,7 @@ function toggleRecording() {
 
 async function startRecording() {
   if (useNativeCam) {
+    showToast('録画経路: NATIVE', 3000); // 【一時診断】
     if (recState !== 'idle') return; // 開始/停止処理中の多重操作を防ぐ
     recState = 'starting';
     try {
@@ -604,6 +606,7 @@ async function startRecording() {
     return;
   }
 
+  showToast('録画経路: WEB(getUserMedia)', 3000); // 【一時診断】
   recordedChunks = [];
   const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
   try {
@@ -983,6 +986,28 @@ if (!isNativeApp && 'serviceWorker' in navigator) {
 }
 
 // ── Start ──────────────────────────────────────────────
+
+// 【一時診断】実機で状態を可視化する（原因特定後に削除する）
+(function showDebugOverlay() {
+  const el = document.createElement('div');
+  el.id = 'dbg-overlay';
+  el.style.cssText = 'position:fixed;top:env(safe-area-inset-top,20px);left:6px;z-index:99999;'
+    + 'background:rgba(255,0,0,0.75);color:#fff;font-size:10px;padding:4px 6px;border-radius:4px;'
+    + 'font-family:monospace;line-height:1.4;pointer-events:none;max-width:90vw;white-space:pre-wrap;';
+  let plat = '?';
+  try { plat = (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || '?'; } catch (_) {}
+  el.textContent =
+    `cap=${!!window.Capacitor} native=${isNativeApp} useNC=${useNativeCam}\n`
+    + `plat=${plat} CP=${!!CameraPreview} started=${nativeCamStarted}`;
+  document.body.appendChild(el);
+  window.__updateDbg = () => {
+    let plat2 = '?';
+    try { plat2 = (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || '?'; } catch (_) {}
+    el.textContent =
+      `cap=${!!window.Capacitor} native=${isNativeApp} useNC=${useNativeCam}\n`
+      + `plat=${plat2} CP=${!!CameraPreview} started=${nativeCamStarted}`;
+  };
+})();
 
 // ネイティブ録画の自動終了(maxDuration/OS割り込み等)や手動停止を一元処理するため、
 // recordingFinished イベントを1回だけ購読する。
