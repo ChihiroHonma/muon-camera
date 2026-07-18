@@ -80,9 +80,13 @@ function nativeStartOptions() {
     toBack: true,           // HTML(UI)を前面、カメラプレビューを背面に
     disableAudio: false,    // 動画に音声を含めるためマイクも有効化
     storeToFile: false,     // capture()はbase64で返す（トリミングのため）
-    enableHighResolution: true
+    enableHighResolution: true,
+    // 録画中プレビュー暗転への対策: 画角未指定だとセッションプリセットが .photo になり、
+    // photo/preview/movie等の複数出力との競合で録画中にプレビュー層へ映像が来なくなる
+    // (外部レビューの第一仮説)。起動時から .hd1920x1080 プリセットに固定し、
+    // 録画開始時の動的なプリセット変更・競合を避ける。
+    videoQuality: '1080p'
     // enableVideoMode:true は写真撮影を壊す(反転・黒)ため使わない。
-    // 録画中プレビューの暗転は既知の制約として扱う（録画自体は音声付きで成功）。
   };
 }
 
