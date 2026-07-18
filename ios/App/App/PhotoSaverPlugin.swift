@@ -14,7 +14,8 @@ public class PhotoSaverPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "PhotoSaverPlugin"
     public let jsName = "PhotoSaver"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "save", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "save", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "saveFile", returnType: CAPPluginReturnPromise)
     ]
 
     @objc func save(_ call: CAPPluginCall) {
@@ -47,6 +48,50 @@ public class PhotoSaverPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.reject("写真へのアクセス許可が未確定です。もう一度お試しください")
             @unknown default:
                 call.reject("写真へのアクセス状態が不明です")
+            }
+        }
+    }
+
+    /**
+     * ファイルパスから写真ライブラリへ保存する（ネイティブ録画の動画など、
+     * base64をbridgeに通すと壊れる大きなファイル向け）。
+     */
+    @objc func saveFile(_ call: CAPPluginCall) {
+        guard let path = call.getString("path") else {
+            call.reject("Missing 'path' parameter")
+            return
+        }
+        guard let type = call.getString("type"), type == "photo" || type == "video" else {
+            call.reject("Missing or invalid 'type' parameter")
+            return
+        }
+        let fileURL: URL
+        if path.hasPrefix("file://") {
+            fileURL = URL(string: path) ?? URL(fileURLWithPath: path)
+        } else {
+            fileURL = URL(fileURLWithPath: path)
+        }
+
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            switch status {
+            case .authorized, .limited:
+                PHPhotoLibrary.shared().performChanges({
+                    if type == "video" {
+                        PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: fileURL)
+                    } else {
+                        PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: fileURL)
+                    }
+                }) { success, error in
+                    if success {
+                        call.resolve()
+                    } else {
+                        call.reject("保存に失敗: \(error?.localizedDescription ?? "unknown error")")
+                    }
+                }
+            case .denied, .restricted:
+                call.reject("写真へのアクセスが拒否されています。設定＞ZERO Camera＞写真 を許可してください")
+            default:
+                call.reject("写真へのアクセス許可が未確定です。もう一度お試しください")
             }
         }
     }

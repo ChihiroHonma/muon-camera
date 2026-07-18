@@ -52,11 +52,31 @@ const thumbnailImg   = document.getElementById('thumbnail-img');
 // ── Native plugins (iOS only) ───────────────────────────
 // ネイティブアプリ実行時のみ有効。Web版では何もしない（従来通りの挙動にフォールバック）。
 const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-const ShutterSound = isNativeApp ? window.Capacitor.registerPlugin('ShutterSound') : null;
-const PhotoSaver   = isNativeApp ? window.Capacitor.registerPlugin('PhotoSaver')   : null;
+const ShutterSound  = isNativeApp ? window.Capacitor.registerPlugin('ShutterSound')  : null;
+const PhotoSaver    = isNativeApp ? window.Capacitor.registerPlugin('PhotoSaver')    : null;
+const CameraPreview = isNativeApp ? window.Capacitor.registerPlugin('CameraPreview') : null;
+// ネイティブ時はカメラをネイティブプレビュー(@capgo/camera-preview)で動かす。
+// Web(PWA)時は従来通り getUserMedia を使う。
+const useNativeCam = !!CameraPreview;
+
+// ネイティブ録画の状態
+let nativeCamStarted = false;
+let nativeVideoPath = null;   // stopRecordVideoで得た動画ファイルパス
 
 function playShutterSound() {
   if (ShutterSound) ShutterSound.play().catch(() => {});
+}
+
+// ネイティブプレビューを撮影画面全体に敷く（UIは透過したWebViewが上に重なる）。
+// width/height/x/y は省略しプラグインのフルスクリーン既定に任せる（座標のズレ回避）。
+function nativeStartOptions() {
+  return {
+    position: currentFacing === 'user' ? 'front' : 'rear',
+    toBack: true,          // HTML(UI)を前面、カメラプレビューを背面に
+    disableAudio: false,   // 動画に音声を含めるためマイクも有効化
+    storeToFile: false,    // capture()はbase64で返す（トリミングのため）
+    enableHighResolution: true
+  };
 }
 
 function blobToBase64(blob) {
@@ -82,6 +102,10 @@ const retakeBtn      = document.getElementById('retake-btn');
 // ── Camera init ────────────────────────────────────────
 
 async function initCamera() {
+  if (useNativeCam) {
+    return initNativeCamera();
+  }
+
   if (stream) {
     stream.getTracks().forEach(t => t.stop());
     stream = null;
@@ -145,9 +169,42 @@ async function initCamera() {
   }
 }
 
+// ── Native camera (iOS: @capgo/camera-preview) ─────────
+
+async function initNativeCamera() {
+  // 既存プレビューを止めてから開始（切替時の二重起動を防ぐ）
+  try { await CameraPreview.stop({ force: true }); } catch (_) {}
+  nativeCamStarted = false;
+  // 撮影画面の背面にネイティブプレビューを出すため、UI側を透過にする
+  document.body.classList.add('native-cam');
+  try {
+    await CameraPreview.start(nativeStartOptions());
+    nativeCamStarted = true;
+    // フラッシュはネイティブで制御。既定OFF。
+    flashSupported = true;
+    flashBtn.classList.remove('disabled');
+    // ズームは setZoom で制御。スライダー範囲を設定。
+    hwZoomSupported = true;
+    try {
+      const z = await CameraPreview.getZoom();
+      zoomMin = z.min ?? 1;
+      zoomMax = Math.min(z.max ?? 5, 10);
+    } catch (_) { zoomMin = 1; zoomMax = 5; }
+    zoomSlider.min = zoomMin;
+    zoomSlider.max = zoomMax;
+    zoomSlider.step = 0.1;
+    zoomSlider.value = zoomMin;
+    zoomValue = zoomMin;
+  } catch (err) {
+    showToast('カメラの起動に失敗: ' + (err?.message || err), 8000);
+  }
+}
+
 // ── Photo capture (silent) ─────────────────────────────
 
 function capturePhoto() {
+  if (useNativeCam) { captureNativePhoto(); return; }
+
   const vw = video.videoWidth;
   const vh = video.videoHeight;
   if (!vw || !vh) return;
@@ -194,6 +251,43 @@ function capturePhoto() {
   }, 'image/jpeg', 0.95);
 }
 
+// ネイティブ撮影: プラグインcapture()のbase64を選択画角にトリミングして保存
+async function captureNativePhoto() {
+  try {
+    // quality:100 は品質最大。プラグインの品質換算バグ(整数除算)があっても
+    // 100/100=1で最高品質になり安全。
+    const { value } = await CameraPreview.capture({ quality: 100 });
+    const img = new Image();
+    img.onload = () => {
+      const iw = img.naturalWidth, ih = img.naturalHeight;
+      const RATIO_MAP = { '1-1': 1, '3-4': 3 / 4, '9-16': 9 / 16 };
+      let cropW = iw, cropH = ih;
+      if (currentRatio !== 'full') {
+        const target = RATIO_MAP[currentRatio];
+        if (target > iw / ih) { cropW = iw; cropH = Math.round(iw / target); }
+        else { cropH = ih; cropW = Math.round(ih * target); }
+      }
+      const sx = Math.round((iw - cropW) / 2);
+      const sy = Math.round((ih - cropH) / 2);
+      captureCanvas.width = cropW;
+      captureCanvas.height = cropH;
+      const ctx = captureCanvas.getContext('2d');
+      // 前面カメラの左右反転はプラグイン側で処理済みのため、ここでは反転しない
+      ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, cropW, cropH);
+      captureCanvas.toBlob(blob => {
+        setCapture('photo', blob, 'image/jpeg');
+        flashShutter();
+        playShutterSound();
+        if (!isBurst) showPreview();
+      }, 'image/jpeg', 0.95);
+    };
+    img.onerror = () => showToast('撮影画像の読み込みに失敗しました');
+    img.src = 'data:image/jpeg;base64,' + value;
+  } catch (e) {
+    showToast('撮影に失敗: ' + (e?.message || e), 6000);
+  }
+}
+
 function flashShutter() {
   // ガイドライン2.5.14対応: 撮影(=記録)したことを視覚的に明示する。
   // マナーモード時は無音になるため、この白フラッシュが唯一の撮影通知になる。
@@ -205,6 +299,20 @@ function flashShutter() {
 // ── Flash ──────────────────────────────────────────────
 
 async function toggleFlash() {
+  if (useNativeCam) {
+    flashOn = !flashOn;
+    flashBtn.classList.toggle('active', flashOn);
+    try {
+      // 写真は撮影時にフラッシュ発光、動画はtorch(常時点灯)が近い。
+      // ここでは torch(点灯) / off をトグルする。
+      await CameraPreview.setFlashMode({ flashMode: flashOn ? 'torch' : 'off' });
+    } catch (e) {
+      showToast('フラッシュの切り替えに失敗しました');
+      flashOn = !flashOn;
+      flashBtn.classList.toggle('active', flashOn);
+    }
+    return;
+  }
   if (!flashSupported) {
     showToast('このデバイスはフラッシュに非対応です');
     return;
@@ -228,12 +336,24 @@ async function flipCamera() {
   if (flashOn) {
     flashOn = false;
     flashBtn.classList.remove('active');
-    try {
-      const track = stream?.getVideoTracks()[0];
-      if (track) await track.applyConstraints({ advanced: [{ torch: false }] });
-    } catch (_) {}
+    if (!useNativeCam) {
+      try {
+        const track = stream?.getVideoTracks()[0];
+        if (track) await track.applyConstraints({ advanced: [{ torch: false }] });
+      } catch (_) {}
+    }
   }
   currentFacing = currentFacing === 'environment' ? 'user' : 'environment';
+
+  if (useNativeCam) {
+    try {
+      await CameraPreview.flip();
+    } catch (_) {
+      // flipが使えない場合はプレビューを再起動して切替
+      await initNativeCamera();
+    }
+    return;
+  }
   await initCamera();
 }
 
@@ -314,6 +434,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 shutterBtn.addEventListener('pointerdown', () => {
   if (currentMode === 'video') return;
   if (isRecording) return;
+  if (useNativeCam) return; // ネイティブのcapture()は非同期で連写に不向きなため連写は無効
   burstTimer = setTimeout(() => {
     isBurst = true;
     shutterBtn.classList.add('burst-mode');
@@ -355,6 +476,10 @@ zoomSlider.addEventListener('input', () => {
 });
 
 async function applyZoom(val) {
+  if (useNativeCam) {
+    try { await CameraPreview.setZoom({ level: val, ramp: false }); } catch (_) {}
+    return;
+  }
   if (!stream) return;
   const track = stream.getVideoTracks()[0];
   if (hwZoomSupported) {
@@ -407,6 +532,11 @@ brightnessSlider.addEventListener('input', () => {
   brightnessValue = parseFloat(brightnessSlider.value);
   video.style.filter = `brightness(${brightnessValue})`;
 });
+// ネイティブプレビューにはCSSフィルタをかけられないため明るさ調整は非対応。スライダーを隠す。
+if (useNativeCam) {
+  const bWrap = brightnessSlider.closest('.slider-wrap');
+  if (bWrap) bWrap.style.display = 'none';
+}
 
 // ── Grid ───────────────────────────────────────────────
 
@@ -444,7 +574,20 @@ function toggleRecording() {
   isRecording ? stopRecording() : startRecording();
 }
 
-function startRecording() {
+async function startRecording() {
+  if (useNativeCam) {
+    try {
+      // disableAudio:false でマイクを含めて録画（@capgoが録画前にマイクを再取得する）
+      await CameraPreview.startRecordVideo({ disableAudio: false });
+      isRecording = true;
+      updateShutterUI();
+      startRecordingIndicator();
+    } catch (e) {
+      showToast('録画開始に失敗: ' + (e?.message || e), 6000);
+    }
+    return;
+  }
+
   recordedChunks = [];
   const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
   try {
@@ -465,7 +608,32 @@ function startRecording() {
   startRecordingIndicator();
 }
 
-function stopRecording() {
+async function stopRecording() {
+  if (useNativeCam) {
+    isRecording = false;
+    updateShutterUI();
+    stopRecordingIndicator();
+    try {
+      const res = await CameraPreview.stopRecordVideo();
+      nativeVideoPath = res.videoFilePath;
+      if (capturedUrl && capturedBlob) URL.revokeObjectURL(capturedUrl);
+      capturedType = 'video';
+      capturedMime = 'video/mp4';
+      capturedBlob = null; // ネイティブ動画はファイルパスで扱う
+      // WebViewから読めるURLに変換してプレビュー
+      capturedUrl = (window.Capacitor && window.Capacitor.convertFileSrc)
+        ? window.Capacitor.convertFileSrc(nativeVideoPath)
+        : nativeVideoPath;
+      thumbnailImg.classList.remove('visible');
+      thumbnailImg.src = '';
+      thumbnailBtn.dataset.type = 'video';
+      showPreview();
+    } catch (e) {
+      showToast('録画停止に失敗: ' + (e?.message || e), 6000);
+    }
+    return;
+  }
+
   mediaRecorder.stop();
   isRecording = false;
   updateShutterUI();
@@ -560,9 +728,21 @@ function buildFile() {
 // ── 保存 ───────────────────────────────────────────────
 
 saveBtn.addEventListener('click', async () => {
+  // ネイティブ動画はファイルパスで保存（base64を経由しないので大きい動画も安全）
+  if (useNativeCam && capturedType === 'video' && nativeVideoPath) {
+    try {
+      await PhotoSaver.saveFile({ path: nativeVideoPath, type: 'video' });
+      showToast('写真ライブラリに保存しました');
+      returnToCamera();
+    } catch (e) {
+      showToast('保存に失敗: ' + (e?.message || e), 8000);
+    }
+    return;
+  }
+
   if (!capturedBlob) return;
 
-  // ネイティブアプリ環境：共有シートを介さず直接フォトライブラリに保存
+  // ネイティブアプリ環境：共有シートを介さず直接フォトライブラリに保存（写真）
   if (PhotoSaver) {
     try {
       const base64 = await blobToBase64(capturedBlob);
@@ -614,8 +794,14 @@ saveBtn.addEventListener('click', async () => {
 // ── 共有 ───────────────────────────────────────────────
 
 shareBtn.addEventListener('click', async () => {
-  if (!capturedBlob) return;
-  const file = buildFile();
+  // ネイティブ動画はblobを持たないため、ファイルURLから読み出す
+  let blob = capturedBlob;
+  if (!blob && useNativeCam && capturedUrl) {
+    try { blob = await (await fetch(capturedUrl)).blob(); } catch (_) {}
+  }
+  if (!blob) return;
+  const ext = capturedType === 'photo' ? 'jpg' : 'mp4';
+  const file = new File([blob], `zerocam_${Date.now()}.${ext}`, { type: capturedMime });
 
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
@@ -631,10 +817,22 @@ shareBtn.addEventListener('click', async () => {
 
 // ── Retake / カメラ復帰 ────────────────────────────────
 
-function returnToCamera() {
+async function returnToCamera() {
   previewVideo.pause();
+  previewVideo.removeAttribute('src');
   previewScreen.classList.add('hidden');
   cameraScreen.classList.remove('hidden');
+
+  if (useNativeCam) {
+    // ネイティブプレビューはプレビュー画面表示中も背面で動き続けているが、
+    // 念のため停止していたら再起動する。
+    try {
+      const s = await CameraPreview.isCameraStarted();
+      if (!s?.value) await initNativeCamera();
+    } catch (_) { await initNativeCamera(); }
+    return;
+  }
+
   // 保存/共有中にiOSのシステムダイアログや共有シートが出ると、
   // getUserMediaの映像トラックが停止して画面が真っ暗になることがある。
   // トラックが生きていれば再生を再開、停止していれば再取得する。

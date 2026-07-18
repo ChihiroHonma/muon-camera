@@ -10,7 +10,8 @@
   "dependencies": {
     "@capacitor/cli": "^8.4.1",
     "@capacitor/core": "^8.4.1",
-    "@capacitor/ios": "^8.4.1"
+    "@capacitor/ios": "^8.4.1",
+    "@capgo/camera-preview": "^8.11.2"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
