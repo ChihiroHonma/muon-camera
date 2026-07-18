@@ -26,21 +26,27 @@ public class PhotoSaverPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("Missing or invalid 'type' parameter (expected 'photo' or 'video')")
             return
         }
-        guard let fileData = Data(base64Encoded: base64) else {
-            call.reject("Failed to decode base64 data")
+        // ignoreUnknownCharacters: 改行・空白が混入していてもデコードできるようにする。
+        // 失敗時は受信した base64 長を返し、サイズ起因(bridge途中で切断)かを診断できるようにする。
+        guard let fileData = Data(base64Encoded: base64, options: [.ignoreUnknownCharacters]) else {
+            call.reject("デコード失敗(受信base64長=\(base64.count))")
             return
         }
 
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-            guard status == .authorized || status == .limited else {
-                call.reject("Photo library access not authorized")
-                return
-            }
-
-            if type == "photo" {
-                self.savePhoto(fileData, call: call)
-            } else {
-                self.saveVideo(fileData, call: call)
+            switch status {
+            case .authorized, .limited:
+                if type == "photo" {
+                    self.savePhoto(fileData, call: call)
+                } else {
+                    self.saveVideo(fileData, call: call)
+                }
+            case .denied, .restricted:
+                call.reject("写真へのアクセスが拒否されています。設定＞ZERO Camera＞写真 を許可してください")
+            case .notDetermined:
+                call.reject("写真へのアクセス許可が未確定です。もう一度お試しください")
+            @unknown default:
+                call.reject("写真へのアクセス状態が不明です")
             }
         }
     }
@@ -53,7 +59,7 @@ public class PhotoSaverPlugin: CAPPlugin, CAPBridgedPlugin {
             if success {
                 call.resolve()
             } else {
-                call.reject("Failed to save photo: \(error?.localizedDescription ?? "unknown error")")
+                call.reject("写真の保存に失敗: \(error?.localizedDescription ?? "unknown error")")
             }
         }
     }
@@ -66,7 +72,7 @@ public class PhotoSaverPlugin: CAPPlugin, CAPBridgedPlugin {
         do {
             try data.write(to: tmpURL)
         } catch {
-            call.reject("Failed to write temp video file: \(error.localizedDescription)")
+            call.reject("一時ファイル書き込み失敗: \(error.localizedDescription)")
             return
         }
 
@@ -77,7 +83,7 @@ public class PhotoSaverPlugin: CAPPlugin, CAPBridgedPlugin {
             if success {
                 call.resolve()
             } else {
-                call.reject("Failed to save video: \(error?.localizedDescription ?? "unknown error")")
+                call.reject("動画の保存に失敗: \(error?.localizedDescription ?? "unknown error")")
             }
         }
     }
