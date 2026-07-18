@@ -18,8 +18,7 @@ public class ShutterSoundPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "ShutterSoundPlugin"
     public let jsName = "ShutterSound"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "play", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "prepareRecording", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "play", returnType: CAPPluginReturnPromise)
     ]
 
     private var player: AVAudioPlayer?
@@ -39,25 +38,6 @@ public class ShutterSoundPlugin: CAPPlugin, CAPBridgedPlugin {
             call.resolve()
         } catch {
             call.reject("Failed to play shutter sound: \(error.localizedDescription)")
-        }
-    }
-
-    /**
-     * 動画録画の直前に呼び、音声セッションを録音可能な .playAndRecord に切り替える。
-     * シャッター音再生で .ambient (再生専用) に変わったまま録画すると音声が無音に
-     * なるため、録画前に録音可能なカテゴリへ戻す。
-     */
-    @objc func prepareRecording(_ call: CAPPluginCall) {
-        do {
-            try AVAudioSession.sharedInstance().setCategory(
-                .playAndRecord,
-                mode: .videoRecording,
-                options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers]
-            )
-            try AVAudioSession.sharedInstance().setActive(true)
-            call.resolve()
-        } catch {
-            call.reject("Failed to prepare recording session: \(error.localizedDescription)")
         }
     }
 }
