@@ -55,13 +55,18 @@ const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && 
 const ShutterSound  = isNativeApp ? window.Capacitor.registerPlugin('ShutterSound')  : null;
 const PhotoSaver    = isNativeApp ? window.Capacitor.registerPlugin('PhotoSaver')    : null;
 const CameraPreview = isNativeApp ? window.Capacitor.registerPlugin('CameraPreview') : null;
+const CapShare      = isNativeApp ? window.Capacitor.registerPlugin('Share')         : null;
 // ネイティブ時はカメラをネイティブプレビュー(@capgo/camera-preview)で動かす。
 // Web(PWA)時は従来通り getUserMedia を使う。
 const useNativeCam = !!CameraPreview;
 
 // ネイティブ録画の状態
 let nativeCamStarted = false;
-let nativeVideoPath = null;   // stopRecordVideoで得た動画ファイルパス
+let nativeVideoPath = null;   // stopRecordVideoで得た動画ファイルパス(file://)
+// 録画の状態機械: 'idle' | 'starting' | 'recording' | 'stopping'
+// 開始/停止の非同期処理中の多重操作・状態競合を防ぐ。
+let recState = 'idle';
+let recFinalizedForCurrent = false;
 
 function playShutterSound() {
   if (ShutterSound) ShutterSound.play().catch(() => {});
@@ -576,13 +581,18 @@ function toggleRecording() {
 
 async function startRecording() {
   if (useNativeCam) {
+    if (recState !== 'idle') return; // 開始/停止処理中の多重操作を防ぐ
+    recState = 'starting';
     try {
       // disableAudio:false でマイクを含めて録画（@capgoが録画前にマイクを再取得する）
       await CameraPreview.startRecordVideo({ disableAudio: false });
+      recState = 'recording';
+      recFinalizedForCurrent = false;
       isRecording = true;
       updateShutterUI();
       startRecordingIndicator();
     } catch (e) {
+      recState = 'idle';
       showToast('録画開始に失敗: ' + (e?.message || e), 6000);
     }
     return;
@@ -610,25 +620,15 @@ async function startRecording() {
 
 async function stopRecording() {
   if (useNativeCam) {
-    isRecording = false;
-    updateShutterUI();
-    stopRecordingIndicator();
+    if (recState !== 'recording') return; // 録画中以外は無視（多重停止防止）
+    recState = 'stopping';
     try {
+      // 手動停止では戻り値とrecordingFinishedイベントの両方が発火する。
+      // 戻り値をフォールバックの最終処理に使う（イベントが先なら二重処理はガードされる）。
       const res = await CameraPreview.stopRecordVideo();
-      nativeVideoPath = res.videoFilePath;
-      if (capturedUrl && capturedBlob) URL.revokeObjectURL(capturedUrl);
-      capturedType = 'video';
-      capturedMime = 'video/mp4';
-      capturedBlob = null; // ネイティブ動画はファイルパスで扱う
-      // WebViewから読めるURLに変換してプレビュー
-      capturedUrl = (window.Capacitor && window.Capacitor.convertFileSrc)
-        ? window.Capacitor.convertFileSrc(nativeVideoPath)
-        : nativeVideoPath;
-      thumbnailImg.classList.remove('visible');
-      thumbnailImg.src = '';
-      thumbnailBtn.dataset.type = 'video';
-      showPreview();
+      if (res && res.videoFilePath) onNativeRecordingFinished(res.videoFilePath);
     } catch (e) {
+      recState = 'recording'; // 停止失敗＝録画は継続中。UIも録画中のまま維持。
       showToast('録画停止に失敗: ' + (e?.message || e), 6000);
     }
     return;
@@ -638,6 +638,30 @@ async function stopRecording() {
   isRecording = false;
   updateShutterUI();
   stopRecordingIndicator();
+}
+
+// ネイティブ録画の終了処理（手動停止・自動終了の両方を一元化）。
+// recordingFinished イベントから呼ばれ、二重処理をガードする。
+function onNativeRecordingFinished(path) {
+  if (recFinalizedForCurrent) return;
+  recFinalizedForCurrent = true;
+  recState = 'idle';
+  isRecording = false;
+  updateShutterUI();
+  stopRecordingIndicator();
+  if (!path) { showToast('録画に失敗しました'); return; }
+  if (capturedUrl && capturedBlob) URL.revokeObjectURL(capturedUrl);
+  nativeVideoPath = path;
+  capturedType = 'video';
+  capturedMime = 'video/mp4';
+  capturedBlob = null; // ネイティブ動画はファイルパスで扱う
+  capturedUrl = (window.Capacitor && window.Capacitor.convertFileSrc)
+    ? window.Capacitor.convertFileSrc(path)
+    : path;
+  thumbnailImg.classList.remove('visible');
+  thumbnailImg.src = '';
+  thumbnailBtn.dataset.type = 'video';
+  showPreview();
 }
 
 // ── Recording indicator (視覚的な記録中表示) ───────────
@@ -794,14 +818,21 @@ saveBtn.addEventListener('click', async () => {
 // ── 共有 ───────────────────────────────────────────────
 
 shareBtn.addEventListener('click', async () => {
-  // ネイティブ動画はblobを持たないため、ファイルURLから読み出す
-  let blob = capturedBlob;
-  if (!blob && useNativeCam && capturedUrl) {
-    try { blob = await (await fetch(capturedUrl)).blob(); } catch (_) {}
+  // ネイティブ動画: ファイルパスを@capacitor/shareに渡す（動画をメモリに読み込まない）
+  if (useNativeCam && capturedType === 'video' && nativeVideoPath && CapShare) {
+    try {
+      await CapShare.share({ title: 'ZERO Camera', files: [nativeVideoPath] });
+      returnToCamera();
+    } catch (e) {
+      // ユーザーキャンセル等はエラーになり得るのでカメラに戻すだけ
+      returnToCamera();
+    }
+    return;
   }
-  if (!blob) return;
+
+  if (!capturedBlob) return;
   const ext = capturedType === 'photo' ? 'jpg' : 'mp4';
-  const file = new File([blob], `zerocam_${Date.now()}.${ext}`, { type: capturedMime });
+  const file = new File([capturedBlob], `zerocam_${Date.now()}.${ext}`, { type: capturedMime });
 
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
@@ -817,6 +848,17 @@ shareBtn.addEventListener('click', async () => {
 
 // ── Retake / カメラ復帰 ────────────────────────────────
 
+async function cleanupNativeVideo() {
+  // 保存/共有/撮り直し後、録画一時ファイルを削除して蓄積を防ぐ
+  if (nativeVideoPath && CameraPreview && CameraPreview.deleteFile) {
+    const p = nativeVideoPath;
+    nativeVideoPath = null;
+    try { await CameraPreview.deleteFile({ path: p }); } catch (_) {}
+  } else {
+    nativeVideoPath = null;
+  }
+}
+
 async function returnToCamera() {
   previewVideo.pause();
   previewVideo.removeAttribute('src');
@@ -824,11 +866,13 @@ async function returnToCamera() {
   cameraScreen.classList.remove('hidden');
 
   if (useNativeCam) {
+    // プレビューで参照していた録画一時ファイルを削除
+    await cleanupNativeVideo();
     // ネイティブプレビューはプレビュー画面表示中も背面で動き続けているが、
     // 念のため停止していたら再起動する。
     try {
-      const s = await CameraPreview.isCameraStarted();
-      if (!s?.value) await initNativeCamera();
+      const s = await CameraPreview.isRunning();
+      if (!s?.isRunning) await initNativeCamera();
     } catch (_) { await initNativeCamera(); }
     return;
   }
@@ -922,6 +966,14 @@ if (!isNativeApp && 'serviceWorker' in navigator) {
 }
 
 // ── Start ──────────────────────────────────────────────
+
+// ネイティブ録画の自動終了(maxDuration/OS割り込み等)や手動停止を一元処理するため、
+// recordingFinished イベントを1回だけ購読する。
+if (useNativeCam && CameraPreview.addListener) {
+  CameraPreview.addListener('recordingFinished', (data) => {
+    onNativeRecordingFinished(data && data.videoFilePath);
+  });
+}
 
 initCamera();
 // Apply initial ratio box size after first layout paint

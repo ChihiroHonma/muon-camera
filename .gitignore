@@ -7,6 +7,10 @@ ios/App/Pods/
 ios/App/output/
 ios/DerivedData/
 ios/App/App/capacitor.config.json
+# Package.swiftは "DO NOT MODIFY - managed by Capacitor CLI" の生成ファイル。
+# Windowsでcap syncするとパス区切りが \ になりmacOSビルドで壊れるため追跡しない
+# （Codemagicのcap syncがmacOS上で正しい / 区切りで毎回生成する）。
+ios/App/CapApp-SPM/Package.swift
 
 # Xcode
 xcuserdata/
