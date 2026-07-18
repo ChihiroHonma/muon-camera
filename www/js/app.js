@@ -87,17 +87,20 @@ async function initCamera() {
     stream = null;
   }
 
-  const constraints = {
-    video: {
-      facingMode: currentFacing,
-      width:  { ideal: 3840 },
-      height: { ideal: 2160 }
-    },
-    audio: false
+  const videoConstraints = {
+    facingMode: currentFacing,
+    width:  { ideal: 3840 },
+    height: { ideal: 2160 }
   };
 
   try {
-    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    // まず音声ありで取得を試みる（動画に音声を含めるため）。
+    // マイク拒否や非対応の場合は映像のみで再取得し、カメラ自体は止めない。
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true });
+    } catch (audioErr) {
+      stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false });
+    }
     video.srcObject = stream;
 
     const track = stream.getVideoTracks()[0];
