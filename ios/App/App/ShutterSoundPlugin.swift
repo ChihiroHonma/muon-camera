@@ -31,10 +31,17 @@ public class ShutterSoundPlugin: CAPPlugin, CAPBridgedPlugin {
 
         do {
             try AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
-            try AVAudioSession.sharedInstance().setActive(true, options: [.notifyOthersOnDeactivation])
+            // notifyOthersOnDeactivation is only valid while deactivating a session.
+            // Passing it with setActive(true) is rejected by newer iOS versions,
+            // which previously made the JS call fail silently before playback.
+            try AVAudioSession.sharedInstance().setActive(true)
 
             player = try AVAudioPlayer(contentsOf: url)
-            player?.play()
+            player?.prepareToPlay()
+            guard player?.play() == true else {
+                call.reject("Failed to start shutter sound playback")
+                return
+            }
             call.resolve()
         } catch {
             call.reject("Failed to play shutter sound: \(error.localizedDescription)")

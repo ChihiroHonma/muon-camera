@@ -19,6 +19,7 @@ html, body {
    上部/下部バーは半透明黒のままプレビュー上に重なる（カメラUIの見た目を維持）。
    プレビュー画面(#preview-screen)は background:#000 のままなので撮影結果が
    背面プレビューを隠す。 */
+html.native-cam,
 body.native-cam,
 body.native-cam #camera-screen,
 body.native-cam #viewfinder,

@@ -181,6 +181,7 @@ async function initNativeCamera() {
   try { await CameraPreview.stop({ force: true }); } catch (_) {}
   nativeCamStarted = false;
   // 撮影画面の背面にネイティブプレビューを出すため、UI側を透過にする
+  document.documentElement.classList.add('native-cam');
   document.body.classList.add('native-cam');
   try {
     await CameraPreview.start(nativeStartOptions());
