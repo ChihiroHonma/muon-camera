@@ -730,12 +730,41 @@ function showPreview() {
     previewVideo.classList.remove('visible');
     previewVideo.pause();
   } else {
+    // 動画ファイルを後で削除しても撮影履歴を表示できるよう、
+    // 読み込み完了時に1フレームを静止画サムネイルとして保持する。
+    previewVideo.addEventListener('loadeddata', captureVideoThumbnail, { once: true });
     previewVideo.src = capturedUrl;
     previewVideo.classList.add('visible');
     previewImage.classList.remove('visible');
     previewVideo.loop = true;
     previewVideo.muted = true;
     previewVideo.play().catch(() => {});
+  }
+}
+
+function captureVideoThumbnail() {
+  if (capturedType !== 'video' || previewVideo.readyState < 2) return;
+  const vw = previewVideo.videoWidth;
+  const vh = previewVideo.videoHeight;
+  if (!vw || !vh) return;
+
+  // サムネイル枠に合わせて中央を正方形に切り出す。
+  const side = Math.min(vw, vh);
+  const sx = Math.round((vw - side) / 2);
+  const sy = Math.round((vh - side) / 2);
+  const canvas = document.createElement('canvas');
+  canvas.width = 240;
+  canvas.height = 240;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  try {
+    ctx.drawImage(previewVideo, sx, sy, side, side, 0, 0, canvas.width, canvas.height);
+    thumbnailImg.src = canvas.toDataURL('image/jpeg', 0.82);
+    thumbnailImg.classList.add('visible');
+    thumbnailBtn.dataset.type = 'video';
+  } catch (_) {
+    // フレーム取得に失敗しても、保存・共有・カメラ復帰は継続する。
   }
 }
 
@@ -872,6 +901,7 @@ async function cleanupNativeVideo() {
     try {
       await CameraPreview.deleteFile({ path: p });
       nativeVideoPath = null; // 削除成功時のみ参照をクリア
+      if (capturedType === 'video' && !capturedBlob) capturedUrl = null;
     } catch (_) {
       // 削除失敗時は参照を保持し次回returnToCamera時に再試行できるようにする
       // （次の録画でonNativeRecordingFinishedが上書きするため蓄積は最小限）。
@@ -882,6 +912,8 @@ async function cleanupNativeVideo() {
 }
 
 async function returnToCamera() {
+  // 一時動画を削除する前に、現在表示中のフレームをサムネイルへ退避する。
+  captureVideoThumbnail();
   previewVideo.pause();
   previewVideo.removeAttribute('src');
   previewScreen.classList.add('hidden');
