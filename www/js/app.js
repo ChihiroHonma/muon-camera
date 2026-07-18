@@ -74,18 +74,25 @@ function playShutterSound() {
 
 // ネイティブプレビューを撮影画面全体に敷く（UIは透過したWebViewが上に重なる）。
 // width/height/x/y は省略しプラグインのフルスクリーン既定に任せる（座標のズレ回避）。
+//
+// disableAudio はモード連動:
+//   写真モード = true  (マイクをセッションに入れない)
+//   動画モード = false (録画に音声を含めるためマイクを有効化)
+// 理由: マイク入力を持つセッションはiOSが音声セッションを録音系(.playAndRecord=
+// サイレントスイッチ無視)へ自動構成するため、写真モードでマイクを保持していると
+// シャッター音のマナーモード連動(.ambient)が上書きされて常に鳴ってしまう。
+// 写真モードからマイクを外すことで .ambient が生き、マナー連動が復活する。
 function nativeStartOptions() {
   return {
     position: currentFacing === 'user' ? 'front' : 'rear',
     toBack: true,           // HTML(UI)を前面、カメラプレビューを背面に
-    disableAudio: false,    // 動画に音声を含めるためマイクも有効化
+    disableAudio: currentMode !== 'video',
     storeToFile: false,     // capture()はbase64で返す（トリミングのため）
     enableHighResolution: true
-    // videoQuality:'1080p' は写真側プレビューまで壊したため撤回(既定の.photoプリセットに戻す)。
+    // videoQuality:'1080p' は写真側を壊したため撤回(既定の.photoプリセット)。
     // enableVideoMode:true も写真撮影を壊す(反転・黒)ため使わない。
-    // 録画中プレビュー暗転は patch-package によるプラグイン修正で対処:
-    //   .photoプリセットはMovieFileOutputと非互換(Apple仕様)のため、録画中だけ
-    //   動画対応プリセットへ一時切替し、録画終了時に復元する。
+    // 録画中プレビュー暗転・プレビュー永久黒は patch-package のプラグイン修正で対処
+    // (.photoプリセットの録画中一時切替 / displayPreviewのopacity復元バグ修正)。
   };
 }
 
@@ -428,20 +435,29 @@ function updateShutterUI() {
 
 // ── Mode switcher ──────────────────────────────────────
 
+let modeSwitching = false; // ネイティブのカメラ再起動中の連打ガード
+
 document.querySelectorAll('.mode-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async () => {
     const mode = btn.dataset.mode;
     if (mode === currentMode) return;
     if (useNativeCam) {
       // 録画の開始/録画中/停止処理中はモード切替を無効（開始中に切り替わる競合を防ぐ）。
       // 録画を止めたい場合はシャッターで停止してから切り替える。
-      if (recState !== 'idle') return;
+      if (recState !== 'idle' || modeSwitching) return;
     } else {
       if (isRecording) stopRecording();
     }
     currentMode = mode;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
     updateShutterUI();
+
+    if (useNativeCam) {
+      // モードに応じたマイク設定(disableAudio)でカメラを再起動する。
+      // 写真=マイクなし(シャッター音のマナー連動を守る) / 動画=マイクあり(音声録画)。
+      modeSwitching = true;
+      try { await initNativeCamera(); } finally { modeSwitching = false; }
+    }
   });
 });
 
@@ -592,7 +608,7 @@ function toggleRecording() {
 
 async function startRecording() {
   if (useNativeCam) {
-    if (recState !== 'idle') return; // 開始/停止処理中の多重操作を防ぐ
+    if (recState !== 'idle' || modeSwitching) return; // 開始/停止処理・カメラ再起動中は無視
     recState = 'starting';
     try {
       // disableAudio:false でマイクを含めて録画（@capgoが録画前にマイクを再取得する）
