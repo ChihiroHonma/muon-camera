@@ -1,0 +1,80 @@
+diff --git a/node_modules/@capgo/camera-preview/ios/Sources/CapgoCameraPreviewPlugin/CameraController.swift b/node_modules/@capgo/camera-preview/ios/Sources/CapgoCameraPreviewPlugin/CameraController.swift
+index 26e1b3e..bd144e4 100644
+--- a/node_modules/@capgo/camera-preview/ios/Sources/CapgoCameraPreviewPlugin/CameraController.swift
++++ b/node_modules/@capgo/camera-preview/ios/Sources/CapgoCameraPreviewPlugin/CameraController.swift
+@@ -134,6 +134,10 @@ class CameraController: NSObject {
+ 
+     var fileVideoOutput: AVCaptureMovieFileOutput?
+ 
++    // PATCH(zerocam): preset in effect before a movie recording temporarily
++    // switched the session away from .photo (restored when recording finishes).
++    var presetBeforeRecording: AVCaptureSession.Preset?
++
+     var previewLayer: AVCaptureVideoPreviewLayer?
+     var gridOverlayView: GridOverlayView?
+     var focusIndicatorView: UIView?
+@@ -714,15 +718,12 @@ extension CameraController {
+                 // Get orientation in a thread-safe way
+                 let videoOrientation = self.getVideoOrientation()
+ 
+-                // Add data output for preview
+-                if let dataOutput = self.dataOutput, captureSession.canAddOutput(dataOutput) {
+-                    captureSession.addOutput(dataOutput)
+-                    // Use dedicated queue for better performance
+-                    let videoQueue = DispatchQueue(label: "com.camera.videoQueue", qos: .userInteractive)
+-                    dataOutput.setSampleBufferDelegate(self, queue: videoQueue)
+-                    // Set orientation immediately
+-                    self.setVideoOrientation(videoOrientation, on: dataOutput.connections)
+-                }
++                // PATCH(zerocam): do NOT attach the VideoDataOutput.
++                // This app never uses captureSample(); on-screen preview is the
++                // AVCaptureVideoPreviewLayer. Keeping an unused VideoDataOutput
++                // attached alongside photo + movie outputs on a .photo-preset
++                // session contributes to output contention while recording.
++                // (original code attached self.dataOutput here)
+ 
+                 // Add photo output immediately to avoid later reconfiguration
+                 if let photoOutput = self.photoOutput, captureSession.canAddOutput(photoOutput) {
+@@ -3074,6 +3075,24 @@ extension CameraController {
+             self.applyVideoStabilizationMode()
+         }
+ 
++        // PATCH(zerocam): AVCaptureMovieFileOutput does not support the .photo
++        // session preset (Apple documented limitation). Recording still succeeds
++        // via internal renegotiation, but the preview layer stops receiving
++        // frames for the whole recording (black preview). Temporarily switch to
++        // a video-capable preset while recording; restored in the
++        // didFinishRecording delegate.
++        self.presetBeforeRecording = nil
++        if captureSession.sessionPreset == .photo {
++            let candidates: [AVCaptureSession.Preset] = [.hd1920x1080, .high, .hd1280x720]
++            for preset in candidates where captureSession.canSetSessionPreset(preset) {
++                self.presetBeforeRecording = captureSession.sessionPreset
++                captureSession.beginConfiguration()
++                captureSession.sessionPreset = preset
++                captureSession.commitConfiguration()
++                break
++            }
++        }
++
+         // Start recording video
+         fileVideoOutput.startRecording(to: fileUrl, recordingDelegate: self)
+ 
+@@ -3473,6 +3492,17 @@ extension UIImage {
+ 
+ extension CameraController: AVCaptureFileOutputRecordingDelegate {
+     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
++        // PATCH(zerocam): restore the session preset that was active before the
++        // recording temporarily switched away from .photo (see captureVideo).
++        if let restorePreset = self.presetBeforeRecording {
++            self.presetBeforeRecording = nil
++            if let session = self.captureSession, session.canSetSessionPreset(restorePreset) {
++                session.beginConfiguration()
++                session.sessionPreset = restorePreset
++                session.commitConfiguration()
++            }
++        }
++
+         let reason = recordingFinishReason(from: error)
+         let stopCompletion = self.stopRecordingCompletion
+         self.stopRecordingCompletion = nil
