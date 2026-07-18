@@ -427,7 +427,13 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const mode = btn.dataset.mode;
     if (mode === currentMode) return;
-    if (isRecording) stopRecording();
+    if (useNativeCam) {
+      // 録画の開始/録画中/停止処理中はモード切替を無効（開始中に切り替わる競合を防ぐ）。
+      // 録画を止めたい場合はシャッターで停止してから切り替える。
+      if (recState !== 'idle') return;
+    } else {
+      if (isRecording) stopRecording();
+    }
     currentMode = mode;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
     updateShutterUI();
@@ -628,8 +634,11 @@ async function stopRecording() {
       const res = await CameraPreview.stopRecordVideo();
       if (res && res.videoFilePath) onNativeRecordingFinished(res.videoFilePath);
     } catch (e) {
-      recState = 'recording'; // 停止失敗＝録画は継続中。UIも録画中のまま維持。
-      showToast('録画停止に失敗: ' + (e?.message || e), 6000);
+      // stopRecordVideoの拒否は「録画がエラー終了した」or「既に録画していない」を意味する
+      // （recStateガードで多重停止は起きないため、録画継続中の拒否は実質発生しない）。
+      // 録画中UIのまま固まらないよう、失敗として終了処理する。
+      showToast('録画に失敗しました: ' + (e?.message || e), 6000);
+      onNativeRecordingFinished(null);
     }
     return;
   }
