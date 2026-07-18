@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "sync": "cap sync",
-    "postinstall": "node -e \"require('fs').copyFileSync('node_modules/@capacitor/core/dist/capacitor.js', 'www/js/capacitor.js')\""
+    "postinstall": "patch-package && node -e \"require('fs').copyFileSync('node_modules/@capacitor/core/dist/capacitor.js', 'www/js/capacitor.js')\""
   },
   "dependencies": {
     "@capacitor/cli": "^8.4.1",
@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
+    "patch-package": "^8.0.1",
     "sharp": "^0.35.3"
   }
 }

@@ -1,0 +1,28 @@
+diff --git a/node_modules/@capgo/camera-preview/ios/Sources/CapgoCameraPreviewPlugin/Plugin.swift b/node_modules/@capgo/camera-preview/ios/Sources/CapgoCameraPreviewPlugin/Plugin.swift
+index 2ba30f0..07249f2 100644
+--- a/node_modules/@capgo/camera-preview/ios/Sources/CapgoCameraPreviewPlugin/Plugin.swift
++++ b/node_modules/@capgo/camera-preview/ios/Sources/CapgoCameraPreviewPlugin/Plugin.swift
+@@ -877,10 +877,19 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin, CLLocationManagerDelegate {
+         // Create and configure the preview view first
+         self.updateCameraFrame()
+ 
+-        // Add preview view to hierarchy first
+-        self.webView?.addSubview(self.previewView)
+-        if self.toBack == true {
+-            self.webView?.sendSubviewToBack(self.previewView)
++        // Add preview view to the WebView container, not inside WKWebView.
++        // Newer WKWebView versions may composite their internal content above a
++        // subview even when every background is transparent, leaving the camera
++        // session active while the preview appears black. Keeping the native
++        // preview as a sibling below WKWebView gives AVFoundation its own visible
++        // layer while the transparent HTML camera UI remains above it.
++        if self.toBack == true,
++           let webView = self.webView,
++           let container = webView.superview {
++            self.previewView.frame = webView.frame
++            container.insertSubview(self.previewView, belowSubview: webView)
++        } else {
++            self.webView?.addSubview(self.previewView)
+         }
+ 
+         // Make webview transparent

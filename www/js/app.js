@@ -256,12 +256,16 @@ function capturePhoto() {
   }, 'image/jpeg', 0.95);
 }
 
-// ネイティブ撮影: プラグインcapture()のbase64を選択画角にトリミングして保存
+// ネイティブ無音撮影: Previewの1フレームを取得して選択画角にトリミングする。
+// AVCapturePhotoOutputを使うcapture()は、日本向けiPhoneではマナーモードでも
+// OS標準シャッター音が鳴るため使用しない。captureSample()は動画フレーム取得なので
+// OSの写真撮影音を発生させず、通常モード用の音はplayShutterSound()だけで制御する。
 async function captureNativePhoto() {
   try {
-    // quality:100 は品質最大。プラグインの品質換算バグ(整数除算)があっても
-    // 100/100=1で最高品質になり安全。
-    const { value } = await CameraPreview.capture({ quality: 100 });
+    const { value } = await CameraPreview.captureSample({
+      quality: 100,
+      mirrorFrontCamera: currentFacing === 'user'
+    });
     const img = new Image();
     img.onload = () => {
       const iw = img.naturalWidth, ih = img.naturalHeight;
