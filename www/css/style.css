@@ -41,6 +41,12 @@ body.native-cam #camera-screen.ratio-full #ratio-box {
   box-shadow: none;
 }
 
+/* Keep the native camera from showing through the controls below a cropped
+   preview. Full mode deliberately restores the translucent overlay below. */
+body.native-cam #bottom-bar {
+  background: #000;
+}
+
 /* ========== SCREENS ========== */
 
 .screen {
