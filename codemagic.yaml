@@ -38,6 +38,9 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
-        # 実機（TestFlight）でマナーモード連動シャッター音の動作を確認してから
-        # submit_to_app_store: true に変更し本申請に進む
+        # ビルドは App Store Connect にアップロードされ、内部テスト(審査不要)で
+        # 即利用可能。submit_to_testflight は「外部テスト審査」への提出を意味し、
+        # 前ビルドが審査中だと毎回失敗して赤いエラーになるため false にしている。
+        # 外部テスターに配布したくなったら true に戻す。
+        submit_to_testflight: false
+        # 本申請する段階になったら submit_to_app_store: true に変更する
