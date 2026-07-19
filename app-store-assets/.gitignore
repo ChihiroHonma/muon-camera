@@ -2,3 +2,4 @@ source/*.png
 output/*.png
 ai-backplates/**/*.png
 review/*.png
+composited/*.png

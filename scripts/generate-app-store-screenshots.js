@@ -5,7 +5,7 @@ const path = require('path');
 const sharp = require('sharp');
 
 const root = path.resolve(__dirname, '..');
-const sourceDir = path.join(root, 'app-store-assets', 'source');
+const sourceDir = path.join(root, 'app-store-assets', 'composited');
 const outputDir = path.join(root, 'app-store-assets', 'output');
 
 const WIDTH = 1320;
