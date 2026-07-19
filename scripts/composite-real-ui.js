@@ -32,7 +32,7 @@ const jobs = [
   },
   {
     source: '03-ratio.png',
-    backplate: path.join('landscape', '03-architecture.png'),
+    backplate: path.join('green', '03-ratio.png'),
     output: '03-ratio.png',
     preview: { left: 62, top: 230, width: 428, height: 719 },
     preservePreviewUi: false
