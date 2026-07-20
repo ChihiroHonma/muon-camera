@@ -6,9 +6,9 @@
 - サブタイトル：`マナーモードに合わせて静かに撮影`
 - プライマリカテゴリ：写真／ビデオ
 - セカンダリカテゴリ：ユーティリティ
-- 著作権：`2026 Chihiro Honma`
-- サポートURL：`https://chihirohonma.github.io/muon-camera/support.html`
-- プライバシーポリシーURL：`https://chihirohonma.github.io/muon-camera/privacy-policy.html`
+- 著作権：`2026 カナエル`
+- サポートURL：`https://kanaeru-apps.github.io/support.html`
+- プライバシーポリシーURL：`https://kanaeru-apps.github.io/privacy-policy.html`
 
 ## 説明文
 
