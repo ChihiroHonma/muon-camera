@@ -6,7 +6,7 @@
 - サブタイトル：`マナーモードに合わせて静かに撮影`
 - プライマリカテゴリ：写真／ビデオ
 - セカンダリカテゴリ：ユーティリティ
-- 著作権：`2026 カナエル`
+- 著作権：`2026 KANAERU`
 - サポートURL：`https://kanaeru-apps.github.io/support.html`
 - プライバシーポリシーURL：`https://kanaeru-apps.github.io/privacy-policy.html`
 
