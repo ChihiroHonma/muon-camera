@@ -3,3 +3,4 @@ output/*.png
 ai-backplates/**/*.png
 review/*.png
 composited/*.png
+submission/*.png
