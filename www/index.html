@@ -63,9 +63,14 @@
       <div id="ratio-box">
         <video id="video" autoplay playsinline muted></video>
         <canvas id="grid-canvas"></canvas>
+        <div id="camera-active-indicator" aria-live="polite">
+          <span class="camera-active-dot"></span>
+          <span>カメラ使用中</span>
+        </div>
         <div id="countdown-display"></div>
         <div id="recording-indicator" class="hidden" aria-live="polite">
           <span class="rec-dot"></span>
+          <span>録画中</span>
           <span id="recording-time">00:00</span>
         </div>
         <div id="shutter-flash" style="
@@ -123,6 +128,12 @@
     </div>
 
   </div><!-- /camera-screen -->
+
+  <!-- Global so it remains visible while the captured-photo preview opens. -->
+  <div id="photo-capture-indicator" class="hidden" role="status" aria-live="assertive">
+    <span class="photo-capture-mark">✓</span>
+    <span>写真を撮影しました</span>
+  </div>
 
   <!-- ===== PREVIEW SCREEN ===== -->
   <div id="preview-screen" class="screen hidden">

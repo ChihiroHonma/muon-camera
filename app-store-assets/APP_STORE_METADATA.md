@@ -45,13 +45,13 @@ ZERO Cameraは、端末のマナーモードに合わせて静かに撮影でき
 
 This is a camera application supporting photo and video capture. No login is required.
 
-Photo capture follows the iPhone's Silent Mode setting. When Silent Mode is enabled, photos are captured quietly. When Silent Mode is disabled, the app plays a shutter sound to notify the user that a photo was taken.
+Photo capture follows the iPhone's Silent Mode setting. When Silent Mode is enabled, photos are captured quietly. When Silent Mode is disabled, the app plays a shutter sound to notify the user that a photo was taken. The camera viewfinder always displays a visible Camera Active indicator, and every photo capture produces a conspicuous on-screen confirmation. Video recording displays a red Recording label and elapsed time for the entire recording, and the preview remains visible while recording.
 
 Camera permission is used for photo and video capture. Microphone permission is used only to record audio with videos. Photo Library Add permission is used only when the user selects Save. Captured media is processed on the device and is not uploaded to the developer's server.
 
 To test:
 1. Allow Camera, Microphone, and Add Photos permissions.
-2. Enable or disable Silent Mode and take a photo.
+2. Enable or disable Silent Mode and take a photo. Confirm that the Camera Active and photo-captured indicators are visible in both modes.
 3. Switch to Video, record a short video, and confirm that it contains audio.
 4. Select Save to add the captured media to the photo library.
 

@@ -321,10 +321,18 @@ async function captureNativePhoto() {
 
 function flashShutter() {
   // ガイドライン2.5.14対応: 撮影(=記録)したことを視覚的に明示する。
-  // マナーモード時は無音になるため、この白フラッシュが唯一の撮影通知になる。
+  // マナーモード中も、白フラッシュと明示メッセージで撮影を通知する。
   const flash = document.getElementById('shutter-flash');
+  const captureIndicator = document.getElementById('photo-capture-indicator');
   flash.style.opacity = '0.7';
   setTimeout(() => { flash.style.opacity = '0'; }, 150);
+  // Keep an explicit, non-configurable in-app indication visible long enough
+  // to be perceived even when the photo preview opens immediately.
+  captureIndicator.classList.remove('hidden');
+  clearTimeout(flashShutter.indicatorTimer);
+  flashShutter.indicatorTimer = setTimeout(() => {
+    captureIndicator.classList.add('hidden');
+  }, 1200);
 }
 
 // ── Flash ──────────────────────────────────────────────

@@ -110,7 +110,34 @@ body.native-cam #bottom-bar {
   z-index: 3;
 }
 
-/* Recording indicator (App Store Guideline 2.5.14: 記録中の視覚的明示) */
+/* Camera and recording indicators (App Store Guideline 2.5.14) */
+#camera-active-indicator {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.camera-active-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #30d158;
+  box-shadow: 0 0 0 3px rgba(48, 209, 88, 0.2);
+}
+
 #recording-indicator {
   position: absolute;
   top: 12px;
@@ -127,6 +154,45 @@ body.native-cam #bottom-bar {
   font-variant-numeric: tabular-nums;
   z-index: 5;
   pointer-events: none;
+}
+
+#photo-capture-indicator {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: max-content;
+  padding: 13px 18px;
+  color: #fff;
+  background: rgba(10, 10, 10, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.42);
+  font-size: 15px;
+  font-weight: 700;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+
+#photo-capture-indicator.hidden {
+  display: none;
+}
+
+.photo-capture-mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: #000;
+  background: #fff;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 900;
 }
 
 #recording-indicator.hidden {
